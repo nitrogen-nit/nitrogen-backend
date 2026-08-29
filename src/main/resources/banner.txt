@@ -21,6 +21,6 @@ ${AnsiColor.DEFAULT}${AnsiStyle.NORMAL}
  Version     : ${application.version}
  Spring Boot : ${spring-boot.version}
  Runtime     : Java ${java.version}
- Environment : ${spring.profiles.active:default}
+ Environment : ${application.environment:${spring.profiles.active:default}}
 ──────────────────────────────────────────────────────────────────────────────
 ${AnsiColor.YELLOW}                    Powered by Nitrogen Engineering${AnsiColor.DEFAULT}

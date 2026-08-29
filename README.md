@@ -20,6 +20,20 @@ Nguồn sự thật về thiết kế: *Nitrogen System Design & Database Design
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=worker
 ```
 
+Khi chạy với RDS hoặc database ngoài local, tạo `.env.local` từ `.env.example`.
+Spring Boot tự đọc file này qua `spring.config.import`, kể cả khi bấm Run trong
+IntelliJ. Không commit `.env.local`.
+
+```bash
+cp .env.example .env.local
+# sửa .env.local bằng endpoint/user/password thật
+scripts/run-web-dev.sh
+```
+
+Khi chạy bằng IntelliJ Run/Debug Configuration, để Working directory là root của
+module `nitrogen-backend`. Nếu `.env.local` có `spring.profiles.active=web`, ô
+Active profiles có thể để trống; còn không thì nhập `web`.
+
 Một artifact, hai chế độ chạy — **không** phải hai ứng dụng:
 
 | Profile | Vai trò |

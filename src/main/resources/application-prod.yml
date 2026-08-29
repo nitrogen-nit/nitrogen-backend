@@ -1,5 +1,8 @@
 # Ràng buộc production.
 
+application:
+  environment: ${NITROGEN_ENVIRONMENT:product}
+
 spring:
   flyway:
     # §16.2.4 — migration là step CI/CD riêng. Nhiều replica rollout cùng lúc

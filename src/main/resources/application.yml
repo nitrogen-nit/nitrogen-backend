@@ -2,6 +2,9 @@
 # Các giá trị đánh dấu §… là ràng buộc từ đặc tả, không đổi khi chưa sửa đặc tả.
 
 spring:
+  config:
+    import: optional:file:.env.local[.properties]
+
   application:
     name: nitrogen-backend
 
@@ -78,6 +81,9 @@ nitrogen:
     # Backend đọc JSON Schema từ classpath — resource này được map từ
     # contracts/json-schema qua <resource> trong pom.xml, không copy tay.
     json-schema-location: classpath:json-schema/
+
+application:
+  environment: ${NITROGEN_ENVIRONMENT:dev}
 
 logging:
   level:
