@@ -1,0 +1,26 @@
+${AnsiColor.CYAN}${AnsiStyle.BOLD}
+███╗   ██╗██╗████████╗██████╗  ██████╗  ██████╗ ███████╗███╗   ██╗
+████╗  ██║██║╚══██╔══╝██╔══██╗██╔═══██╗██╔════╝ ██╔════╝████╗  ██║
+██╔██╗ ██║██║   ██║   ██████╔╝██║   ██║██║  ███╗█████╗  ██╔██╗ ██║
+██║╚██╗██║██║   ██║   ██╔══██╗██║   ██║██║   ██║██╔══╝  ██║╚██╗██║
+██║ ╚████║██║   ██║   ██║  ██║╚██████╔╝╚██████╔╝███████╗██║ ╚████║
+╚═╝  ╚═══╝╚═╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝  ╚═════╝ ╚══════╝╚═╝  ╚═══╝
+${AnsiColor.DEFAULT}${AnsiStyle.NORMAL}
+${AnsiColor.GREEN}${AnsiStyle.BOLD}
+                            ╭─────────────╮
+                            │      7      │
+                            │             │
+                            │      N      │
+                            │             │
+                            │   14.007    │
+                            ╰─────────────╯
+${AnsiColor.DEFAULT}${AnsiStyle.NORMAL}
+              Chemistry Learning & Assessment Platform
+──────────────────────────────────────────────────────────────────────────────
+ Application : ${spring.application.name}
+ Version     : ${application.version}
+ Spring Boot : ${spring-boot.version}
+ Runtime     : Java ${java.version}
+ Environment : ${spring.profiles.active:default}
+──────────────────────────────────────────────────────────────────────────────
+${AnsiColor.YELLOW}                    Powered by Nitrogen Engineering${AnsiColor.DEFAULT}

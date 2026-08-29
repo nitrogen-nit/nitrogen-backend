@@ -1,0 +1,18 @@
+# Profile test: datasource và rabbit do @ServiceConnection của Testcontainers cấp.
+# Flyway bật để MigrateFromEmptyDbTest kiểm đúng đường "cài mới".
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    schemas: flyway_history
+    default-schema: flyway_history
+
+logging:
+  level:
+    org.testcontainers: WARN
+    com.github.dockerjava: WARN

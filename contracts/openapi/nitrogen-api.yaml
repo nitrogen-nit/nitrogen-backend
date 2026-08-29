@@ -1,0 +1,9 @@
+# Placeholder. springdoc sinh spec thật tại /v3/api-docs khi app chạy.
+# CI (contract-check) dump spec đó và diff với file này — lệch thì fail build,
+# nên contract và implementation không thể trôi khỏi nhau.
+openapi: 3.1.0
+info:
+  title: Nitrogen API
+  version: 0.0.1-SNAPSHOT
+  description: Nền tảng học và luyện thi Hoá học THPT.
+paths: {}

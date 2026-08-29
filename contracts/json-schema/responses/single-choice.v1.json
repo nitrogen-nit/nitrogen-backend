@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.nitrogen.vn/responses/single-choice.v1.json",
+  "title": "SINGLE_CHOICE response",
+  "description": "Đáp án Phần I đề THPT — trắc nghiệm nhiều lựa chọn, đúng một phương án.",
+  "type": "object",
+  "required": ["schema_version", "type", "selected_option"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": 1 },
+    "type": { "const": "SINGLE_CHOICE" },
+    "selected_option": {
+      "type": "string",
+      "pattern": "^[A-Z]$",
+      "description": "Nhãn phương án đã chọn."
+    }
+  }
+}

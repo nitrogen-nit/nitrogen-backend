@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.nitrogen.vn/responses/true-false-group.v1.json",
+  "title": "TRUE_FALSE_GROUP response",
+  "description": "Đáp án Phần II đề THPT — 4 ý a–d Đúng/Sai. Chấm luỹ tiến theo số ý đúng (xem scoring-rule/progressive-true-false.v1.json).",
+  "type": "object",
+  "required": ["schema_version", "type", "statements"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": 1 },
+    "type": { "const": "TRUE_FALSE_GROUP" },
+    "statements": {
+      "type": "object",
+      "description": "Khoá là nhãn ý (a, b, c, d); thiếu khoá nghĩa là chưa trả lời.",
+      "propertyNames": { "pattern": "^[a-z]$" },
+      "additionalProperties": { "type": "boolean" },
+      "minProperties": 1,
+      "maxProperties": 8
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.nitrogen.vn/responses/quantity.v1.json",
+  "title": "QUANTITY response",
+  "description": "Đáp án Phần III đề THPT — trả lời ngắn dạng số. Giá trị là CHUỖI, không phải number, để giữ nguyên số chữ số có nghĩa người học nhập (0.50 khác 0.5) — grader quyết định quy tắc làm tròn và sai số.",
+  "type": "object",
+  "required": ["schema_version", "type", "value"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": 1 },
+    "type": { "const": "QUANTITY" },
+    "value": {
+      "type": "string",
+      "pattern": "^-?\\d+(\\.\\d+)?([eE][+-]?\\d+)?$"
+    },
+    "unit": {
+      "type": "string",
+      "maxLength": 32,
+      "description": "Đơn vị, ví dụ mol. Vắng mặt nghĩa là câu hỏi không yêu cầu đơn vị."
+    }
+  }
+}

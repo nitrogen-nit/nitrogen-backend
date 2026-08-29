@@ -1,0 +1,15 @@
+# Chế độ web: phục vụ REST và chạy scheduler.
+# Chạy: --spring.profiles.active=web
+
+server:
+  port: ${NITROGEN_WEB_PORT:8080}
+  shutdown: graceful
+
+spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+nitrogen:
+  outbox:
+    # Chu kỳ quét outbox. Chỉ web replica chạy publisher.
+    publish-interval: PT5S

@@ -1,0 +1,84 @@
+# Cấu hình chung cho mọi chế độ chạy.
+# Các giá trị đánh dấu §… là ràng buộc từ đặc tả, không đổi khi chưa sửa đặc tả.
+
+spring:
+  application:
+    name: nitrogen-backend
+
+  # Một artifact, hai chế độ chạy. Profile `core` bật ở cả hai để các facade
+  # cross-module (@Profile("core")) luôn có mặt.
+  profiles:
+    group:
+      web: core
+      worker: core
+
+  datasource:
+    url: ${NITROGEN_DB_URL:jdbc:postgresql://localhost:5432/nitrogen}
+    username: ${NITROGEN_DB_USER:nitrogen}
+    password: ${NITROGEN_DB_PASSWORD:nitrogen}
+    hikari:
+      pool-name: nitrogen-pool
+      maximum-pool-size: ${NITROGEN_DB_POOL_SIZE:10}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate          # §7, §16.2 — Flyway là cơ chế duy nhất đổi schema
+    open-in-view: false           # §15 — transaction kết thúc tại service layer
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 50          # §15
+        order_inserts: true       # §15
+        order_updates: true       # §15
+
+  flyway:
+    # KHÔNG dùng wildcard `db/migration/**`: Flyway chỉ hỗ trợ wildcard cho
+    # location kiểu `filesystem:`. Với `classpath:` nó quét đệ quy sẵn, nên một
+    # dòng này đã bao trọn 12 thư mục module — thêm `/**` lại làm nó không khớp
+    # gì cả và Flyway im lặng chạy 0 migration.
+    locations: classpath:db/migration
+    # Schema riêng cho bảng lịch sử của chính Flyway, tách khỏi 12 schema nghiệp vụ.
+    schemas: flyway_history
+    default-schema: flyway_history
+
+  rabbitmq:
+    host: ${NITROGEN_RABBIT_HOST:localhost}
+    port: ${NITROGEN_RABBIT_PORT:5672}
+    username: ${NITROGEN_RABBIT_USER:guest}
+    password: ${NITROGEN_RABBIT_PASSWORD:guest}
+
+  threads:
+    virtual:
+      enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,modulith
+  endpoint:
+    health:
+      probes:
+        enabled: true             # bật /actuator/health/liveness và /readiness
+      show-details: when-authorized
+  health:
+    # Rabbit không phải điều kiện readiness của web replica: web vẫn phục vụ
+    # được request đọc khi broker chết, đẩy event thì đã có outbox đỡ.
+    rabbit:
+      enabled: ${NITROGEN_RABBIT_HEALTH_ENABLED:false}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+nitrogen:
+  contracts:
+    # Backend đọc JSON Schema từ classpath — resource này được map từ
+    # contracts/json-schema qua <resource> trong pom.xml, không copy tay.
+    json-schema-location: classpath:json-schema/
+
+logging:
+  level:
+    vn.nitrogen: ${NITROGEN_LOG_LEVEL:INFO}

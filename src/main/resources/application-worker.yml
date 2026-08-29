@@ -1,0 +1,27 @@
+# Chế độ worker: tiêu thụ RabbitMQ, không mở cổng HTTP nghiệp vụ.
+# Chạy: --spring.profiles.active=worker
+#
+# @RabbitListener trong các module đều gate bằng @Profile("worker"), nên chỉ
+# chế độ này mới đăng ký consumer.
+
+spring:
+  main:
+    web-application-type: servlet   # vẫn giữ servlet để expose actuator probe
+  rabbitmq:
+    listener:
+      simple:
+        acknowledge-mode: manual
+        prefetch: ${NITROGEN_RABBIT_PREFETCH:10}
+        concurrency: ${NITROGEN_RABBIT_CONCURRENCY:2}
+        max-concurrency: ${NITROGEN_RABBIT_MAX_CONCURRENCY:8}
+        default-requeue-rejected: false   # reject → DLQ, không quay vòng vô hạn
+
+server:
+  port: ${NITROGEN_WORKER_PORT:8081}
+  shutdown: graceful
+
+management:
+  health:
+    rabbit:
+      # Worker mất broker là mất khả năng làm việc — phải phản ánh vào health.
+      enabled: true
