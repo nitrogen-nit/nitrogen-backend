@@ -1,5 +1,6 @@
 package vn.nitrogen.architecture;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.modulith.core.ApplicationModules;
 import org.springframework.modulith.docs.Documenter;
@@ -14,6 +15,7 @@ import vn.nitrogen.NitrogenApplication;
  * phụ thuộc không khai báo giữa các module; ArchUnit bắt vi phạm chi tiết hơn
  * bên trong module (tầng, entity, transaction).
  */
+@Tag("architecture")
 class ModularityTest {
 
     private static final ApplicationModules MODULES = ApplicationModules.of(NitrogenApplication.class);

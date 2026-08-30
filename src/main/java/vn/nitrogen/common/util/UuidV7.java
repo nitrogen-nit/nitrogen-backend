@@ -32,7 +32,7 @@ public final class UuidV7 {
 
         long msb = (unixMillis & 0xFFFF_FFFF_FFFFL) << 16;
         msb |= 0x7000L;                                  // version 7
-        msb |= ((random[0] & 0xFFL) << 8) | (random[1] & 0xFFL);
+        msb |= ((random[0] & 0x0FL) << 8) | (random[1] & 0xFFL);
 
         long lsb = 0L;
         for (int i = 2; i < 10; i++) {

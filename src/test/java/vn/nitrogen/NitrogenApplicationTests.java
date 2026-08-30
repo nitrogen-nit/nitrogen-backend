@@ -2,6 +2,7 @@ package vn.nitrogen;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -19,6 +20,8 @@ import vn.nitrogen.support.TestcontainersBase;
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles({"test", "web"})
+@Tag("docker")
+@Tag("integration")
 class NitrogenApplicationTests extends TestcontainersBase {
 
     @LocalServerPort

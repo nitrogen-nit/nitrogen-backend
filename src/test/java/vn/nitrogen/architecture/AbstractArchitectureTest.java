@@ -3,6 +3,7 @@ package vn.nitrogen.architecture;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
+import org.junit.jupiter.api.Tag;
 
 /**
  * Nền cho mọi test kiến trúc.
@@ -11,6 +12,7 @@ import com.tngtech.archunit.core.importer.ImportOption;
  * test này chạy trên mọi module nên nếu mỗi lớp con tự quét thì thời gian build
  * tăng theo cấp số nhân số module.
  */
+@Tag("architecture")
 public abstract class AbstractArchitectureTest {
 
     protected static final String ROOT_PACKAGE = "vn.nitrogen";

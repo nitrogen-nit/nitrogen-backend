@@ -1,0 +1,182 @@
+name: Backend Container
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+  workflow_run:
+    workflows:
+      - Backend CI
+    branches:
+      - main
+    types:
+      - completed
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: backend-container-${{ github.event.workflow_run.head_sha || github.ref }}
+  cancel-in-progress: false
+
+env:
+  IMAGE_NAME: ghcr.io/nitrogen-nit/nitrogen-backend
+  JAVA_VERSION: "21"
+  MAVEN_ARGS: "-B --no-transfer-progress"
+
+jobs:
+  backend-container:
+    name: backend-container
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+
+      - name: Build executable JAR and dependency SBOM
+        run: ./mvnw $MAVEN_ARGS package -DskipTests
+
+      - name: Prepare immutable image tags
+        id: meta
+        run: |
+          set -euo pipefail
+          git_sha="$(git rev-parse HEAD)"
+          jar_source="$(find target -maxdepth 1 -type f -name '*.jar' ! -name '*.original' | head -n 1)"
+          test -n "$jar_source"
+          jar_name="nitrogen-backend-${git_sha}.jar"
+          cp "$jar_source" "target/$jar_name"
+
+          version="sha-$git_sha"
+          tags="${IMAGE_NAME}:sha-${git_sha}"
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            version="${GITHUB_REF_NAME}"
+            tags="${tags}"$'\n'"${IMAGE_NAME}:${GITHUB_REF_NAME}"
+          fi
+
+          echo "git_sha=$git_sha" >> "$GITHUB_OUTPUT"
+          echo "tag=sha-$git_sha" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "jar_file=$jar_name" >> "$GITHUB_OUTPUT"
+          {
+            echo "tags<<EOF"
+            echo "$tags"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build local container image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: local/nitrogen-backend:${{ steps.meta.outputs.git_sha }}
+
+      - name: Scan container image
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: local/nitrogen-backend:${{ steps.meta.outputs.git_sha }}
+          vuln-type: os,library
+          severity: HIGH,CRITICAL
+          ignore-unfixed: false
+          exit-code: "1"
+
+      - name: Generate CycloneDX image SBOM
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: local/nitrogen-backend:${{ steps.meta.outputs.git_sha }}
+          format: cyclonedx
+          output: image-sbom.cdx.json
+          exit-code: "0"
+
+      - name: Generate SPDX image SBOM
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: local/nitrogen-backend:${{ steps.meta.outputs.git_sha }}
+          format: spdx-json
+          output: image-sbom.spdx.json
+          exit-code: "0"
+
+      - name: Login to GHCR
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push immutable image tags
+        if: ${{ github.event_name != 'pull_request' }}
+        id: push
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+          GIT_SHA: ${{ steps.meta.outputs.git_sha }}
+        run: |
+          set -euo pipefail
+          local_ref="local/nitrogen-backend:$GIT_SHA"
+          while IFS= read -r image_tag; do
+            test -n "$image_tag"
+            docker tag "$local_ref" "$image_tag"
+            docker push "$image_tag"
+          done <<< "$TAGS"
+
+          digest="$(docker buildx imagetools inspect "${IMAGE_NAME}:sha-${GIT_SHA}" --format '{{.Manifest.Digest}}')"
+          test -n "$digest"
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+
+      - name: Write deployment metadata
+        if: ${{ github.event_name != 'pull_request' }}
+        env:
+          DIGEST: ${{ steps.push.outputs.digest }}
+          GIT_SHA: ${{ steps.meta.outputs.git_sha }}
+          TAG: ${{ steps.meta.outputs.tag }}
+          JAR_FILE: ${{ steps.meta.outputs.jar_file }}
+        run: |
+          set -euo pipefail
+          jq -n \
+            --arg image "$IMAGE_NAME" \
+            --arg gitSha "$GIT_SHA" \
+            --arg tag "$TAG" \
+            --arg digest "$DIGEST" \
+            --arg jar "$JAR_FILE" \
+            --arg sbom "image-sbom.cdx.json" \
+            '{
+              image: $image,
+              gitSha: $gitSha,
+              tag: $tag,
+              digest: $digest,
+              jar: $jar,
+              sbom: $sbom
+            }' > image-metadata.json
+
+      - name: Upload container scan artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-container-scan-${{ steps.meta.outputs.git_sha }}
+          path: |
+            image-sbom.cdx.json
+            image-sbom.spdx.json
+            target/bom.json
+            target/${{ steps.meta.outputs.jar_file }}
+          if-no-files-found: error
+
+      - name: Upload deployment metadata
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-image-metadata-${{ steps.meta.outputs.git_sha }}
+          path: image-metadata.json
+          if-no-files-found: error

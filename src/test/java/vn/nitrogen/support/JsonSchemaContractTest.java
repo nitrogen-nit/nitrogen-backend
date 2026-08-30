@@ -9,6 +9,7 @@ import com.networknt.schema.JsonSchemaFactory;
 import com.networknt.schema.SpecVersion;
 import java.io.InputStream;
 import java.util.Set;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -20,6 +21,7 @@ import org.junit.jupiter.params.provider.CsvSource;
  * <p>Test này canh gác cấu hình {@code <resource>} trong pom: nếu ai đó gỡ nó
  * ra, schema biến mất khỏi classpath và mọi validation ở runtime im lặng hỏng.
  */
+@Tag("unit")
 class JsonSchemaContractTest {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
