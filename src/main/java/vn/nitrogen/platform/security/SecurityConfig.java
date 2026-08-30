@@ -14,8 +14,8 @@ import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 /**
  * Filter chain tối thiểu để app bootstrap được.
  *
- * <p>Phạm vi hiện tại: stateless API, không dùng cookie session, mở actuator
- * probe và OpenAPI, chặn phần còn lại.
+ * <p>Phạm vi hiện tại: stateless API, không dùng cookie session, giữ CSRF mặc
+ * định của Spring Security, mở actuator probe và OpenAPI, chặn phần còn lại.
  *
  * <p>TODO: chưa cấu hình JWT resource server, ma trận quyền theo role và
  * chính sách exam integrity — sẽ bổ sung ở PR security.
@@ -27,9 +27,6 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
-                // API dùng bearer token/stateless, không dùng browser cookie
-                // session. Giữ CSRF cho surface khác, chỉ bỏ qua API path.
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"))
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
