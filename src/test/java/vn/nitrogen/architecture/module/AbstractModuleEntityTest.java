@@ -1,17 +1,12 @@
 package vn.nitrogen.architecture.module;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
-import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.fields;
 
-import com.tngtech.archunit.core.domain.JavaField;
-import com.tngtech.archunit.lang.ArchCondition;
-import com.tngtech.archunit.lang.ConditionEvents;
-import com.tngtech.archunit.lang.SimpleConditionEvent;
 import jakarta.persistence.Entity;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
 import org.junit.jupiter.api.Test;
 import vn.nitrogen.architecture.AbstractArchitectureTest;
+import vn.nitrogen.architecture.NitrogenModules;
+import vn.nitrogen.architecture.rules.ArchitectureRules;
 
 /**
  * Cấm JPA association xuyên module (§4.3 mục 4, §15.1).
@@ -39,36 +34,14 @@ public abstract class AbstractModuleEntityTest extends AbstractArchitectureTest
 
     @Test
     void entitiesShouldNotMapAssociationsAcrossModules() {
-        fields().that()
-                .areDeclaredInClassesThat().resideInAPackage(getModuleDomainSubpackage())
-                .should(targetOwnModuleOnly())
-                .allowEmptyShould(true)
+        ArchitectureRules.entitiesShouldNotReferenceOtherModuleEntities(ROOT_PACKAGE, getModulePackage())
                 .check(productionClasses);
     }
 
-    private ArchCondition<JavaField> targetOwnModuleOnly() {
-        return new ArchCondition<>("không map @ManyToOne/@OneToOne sang module khác") {
-
-            @Override
-            public void check(JavaField field, ConditionEvents events) {
-                boolean isAssociation = field.isAnnotatedWith(ManyToOne.class)
-                        || field.isAnnotatedWith(OneToOne.class);
-                if (!isAssociation) {
-                    return;
-                }
-
-                String targetPackage = field.getRawType().getPackageName();
-                boolean insideProject = targetPackage.startsWith(ROOT_PACKAGE);
-                boolean insideOwnModule = targetPackage.startsWith(getModulePackage());
-
-                if (insideProject && !insideOwnModule) {
-                    events.add(SimpleConditionEvent.violated(field,
-                            "%s map association sang %s — xuyên ranh giới module %s. "
-                                    .formatted(field.getFullName(), field.getRawType().getName(),
-                                            getModulePackage())
-                                    + "Lưu UUID và tra qua module API thay vì mapping."));
-                }
-            }
-        };
+    @Test
+    void moduleReferencesShouldUseUuid() {
+        ArchitectureRules.moduleReferencesShouldUseUuid(
+                        getModulePackage(), NitrogenModules.BUSINESS_MODULE_NAMES)
+                .check(productionClasses);
     }
 }

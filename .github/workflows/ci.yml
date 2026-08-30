@@ -76,7 +76,7 @@ jobs:
       - name: Run architecture tests
         run: ./mvnw $MAVEN_ARGS test -Parchitecture
 
-      - name: Upload architecture test reports
+      - name: Upload architecture reports, diagrams, and violation output
         if: always()
         uses: actions/upload-artifact@v4
         with:

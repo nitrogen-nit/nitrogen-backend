@@ -95,11 +95,14 @@ bản copy là tái tạo drift ngay bên trong repo.
 Mỗi module sở hữu đúng một schema PostgreSQL cùng tên. Không module nào ghi vào
 schema của module khác (§8).
 
-Layer bên trong module — **chỉ tạo thư mục khi có nội dung**, không tạo rỗng:
+Layer chuẩn bên trong module — **chỉ tạo thư mục khi có nội dung**, không tạo rỗng:
 
 ```
-api/ config/ domain/ dto/ exception/ repository/ service/ messaging/ util/ web/
+api/ dto/ events/ domain/ repository/ service/ web/
 ```
+
+Một vài package phụ như `config`, `exception`, `messaging` hoặc `util` chỉ nên xuất
+hiện khi module thật sự cần và vẫn chịu cùng rule boundary.
 
 ## Thêm một module mới
 
@@ -115,9 +118,9 @@ api/ config/ domain/ dto/ exception/ repository/ service/ messaging/ util/ web/
    Muốn gọi module khác thì thêm tên module đó vào `allowedDependencies` —
    `ModularityTest` fail nếu có phụ thuộc chưa khai báo.
 
-2. Nếu module có `api/` hoặc `dto/`, thêm `package-info.java` cho từng package
-   với `@NamedInterface("api")` / `@NamedInterface("dto")`. Không có nó,
-   Spring Modulith coi cả hai là nội bộ và module khác không import được.
+2. Nếu module có `api/`, `dto/` hoặc `events/`, thêm `package-info.java` cho từng
+   package với `@NamedInterface("api")`, `@NamedInterface("dto")` hoặc
+   `@NamedInterface("events")`. Không có nó, Spring Modulith coi package là nội bộ.
 
 3. Tạo `src/main/resources/db/migration/<module>/V<ts>__<module>_create_schema.sql`.
 
@@ -149,11 +152,19 @@ Enforce tự động ở hai tầng, bổ sung cho nhau:
 | Công cụ | Bắt được gì |
 |---|---|
 | Spring Modulith `verify()` | phụ thuộc vòng, phụ thuộc không khai báo trong `allowedDependencies` |
-| ArchUnit | truy cập ngoài `api/`+`dto/`, sai tầng, JPA association xuyên module, external call trong transaction, `@ManyToOne` EAGER, Lombok `@Data` trên entity |
+| ArchUnit | truy cập ngoài `api/`+`dto/`+`events/`, sai tầng, repository ownership, DTO-only REST, stateless controller, transaction ngoài service, JPA association xuyên module, non-UUID `@ModuleReference`, external call trong transaction, eager to-one association, Lombok `@Data` trên entity |
 
 Luật chặt hơn Artemis một bậc có chủ đích: Artemis cho phép truy cập `domain/` xuyên
 module, Nitrogen cấm — §4.3 quy định chỉ lưu foreign key UUID và tra cứu qua module
 API, nên mở `domain/` sẽ mở lại đúng cánh cửa đó.
+
+Tài liệu chi tiết:
+
+- [`docs/architecture/rest-api-conventions.md`](docs/architecture/rest-api-conventions.md)
+- [`docs/architecture/coding-conventions.md`](docs/architecture/coding-conventions.md)
+- [`docs/architecture/module-ownership.md`](docs/architecture/module-ownership.md)
+- [`docs/architecture/review-checklist.md`](docs/architecture/review-checklist.md)
+- [`docs/adr/`](docs/adr/)
 
 ## Quyết định đã chốt trong skeleton này
 

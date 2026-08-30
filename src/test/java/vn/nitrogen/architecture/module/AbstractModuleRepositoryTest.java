@@ -5,6 +5,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.repository.Repository;
 import vn.nitrogen.architecture.AbstractArchitectureTest;
+import vn.nitrogen.architecture.rules.ArchitectureRules;
 
 /**
  * Repository là tài sản riêng của module (§4.3).
@@ -21,13 +22,7 @@ public abstract class AbstractModuleRepositoryTest extends AbstractArchitectureT
 
     @Test
     void repositoriesShouldOnlyBeUsedByOwnServiceOrApi() {
-        classes().that()
-                .resideInAPackage(getModuleRepositorySubpackage())
-                .should().onlyBeAccessed().byAnyPackage(
-                        getModuleRepositorySubpackage(),
-                        getModuleServiceSubpackage(),
-                        getModuleApiSubpackage())
-                .allowEmptyShould(true)
+        ArchitectureRules.repositoriesShouldOnlyBeUsedByOwnServiceOrApi(getModulePackage())
                 .check(productionClasses);
     }
 
@@ -38,6 +33,14 @@ public abstract class AbstractModuleRepositoryTest extends AbstractArchitectureT
                 .and().resideInAPackage(getModuleWithSubpackage())
                 .should().resideInAPackage(getModuleRepositorySubpackage())
                 .allowEmptyShould(true)
+                .check(productionClasses);
+    }
+
+    @Test
+    void repositoriesShouldNotOpenTransactionBoundary() {
+        ArchitectureRules.repositoriesShouldNotDeclareTransactions(getModulePackage())
+                .check(productionClasses);
+        ArchitectureRules.repositoryMethodsShouldNotDeclareTransactions(getModulePackage())
                 .check(productionClasses);
     }
 }

@@ -24,6 +24,10 @@ public interface ModuleArchitectureTest {
         return getModulePackage() + ".dto..";
     }
 
+    default String getModuleEventsSubpackage() {
+        return getModulePackage() + ".events..";
+    }
+
     default String getModuleDomainSubpackage() {
         return getModulePackage() + ".domain..";
     }

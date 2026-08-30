@@ -1,13 +1,12 @@
 package vn.nitrogen.architecture.module;
 
-import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RestController;
 import vn.nitrogen.architecture.AbstractArchitectureTest;
+import vn.nitrogen.architecture.rules.ArchitectureRules;
 
 /**
  * Controller mỏng và không mở transaction (§4.3).
@@ -21,10 +20,7 @@ public abstract class AbstractModuleWebTest extends AbstractArchitectureTest
 
     @Test
     void webShouldNotAccessRepositoryDirectly() {
-        noClasses().that()
-                .resideInAPackage(getModuleWebSubpackage())
-                .should().dependOnClassesThat().resideInAPackage(getModuleRepositorySubpackage())
-                .allowEmptyShould(true)
+        ArchitectureRules.webShouldNotAccessOwnRepository(getModulePackage())
                 .check(productionClasses);
     }
 
@@ -48,11 +44,7 @@ public abstract class AbstractModuleWebTest extends AbstractArchitectureTest
 
     @Test
     void restControllersShouldResideInWebPackage() {
-        classes().that()
-                .areAnnotatedWith(RestController.class)
-                .and().resideInAPackage(getModuleWithSubpackage())
-                .should().resideInAPackage(getModuleWebSubpackage())
-                .allowEmptyShould(true)
+        ArchitectureRules.restControllersShouldResideInWebPackage(getModulePackage())
                 .check(productionClasses);
     }
 
@@ -60,10 +52,7 @@ public abstract class AbstractModuleWebTest extends AbstractArchitectureTest
     void webShouldNotExposeDomainEntities() {
         // §4.3: Controller chỉ nhận/trả DTO. Entity lọt ra ngoài kéo theo lazy
         // proxy và khoá chặt hình dạng JSON vào hình dạng bảng.
-        noClasses().that()
-                .resideInAPackage(getModuleWebSubpackage())
-                .should().dependOnClassesThat().resideInAPackage(getModuleDomainSubpackage())
-                .allowEmptyShould(true)
+        ArchitectureRules.webShouldNotExposeOwnDomain(getModulePackage())
                 .check(productionClasses);
     }
 }

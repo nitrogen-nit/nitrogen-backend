@@ -271,6 +271,7 @@
 								<include>pom.xml</include>
 								<include>README.md</include>
 								<include>contracts/**/*.md</include>
+								<include>docs/**/*.md</include>
 								<include>.github/**/*.yml</include>
 								<include>src/**/*.java</include>
 								<include>src/**/*.yml</include>
