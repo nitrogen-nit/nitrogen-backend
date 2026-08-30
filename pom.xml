@@ -32,7 +32,7 @@
 		<jacoco.branch.minimum>0.70</jacoco.branch.minimum>
 		<sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
 		<sonar.coverage.exclusions>**/*Application.java,**/*Config.java,**/api/**,**/dto/**,**/package-info.java</sonar.coverage.exclusions>
-		<sonar.projectKey>nitrogen-backend</sonar.projectKey>
+		<sonar.projectKey>nitrogen-nit_nitrogen-backend</sonar.projectKey>
 		<sonar.projectName>nitrogen-backend</sonar.projectName>
 		<sonar.qualitygate.wait>true</sonar.qualitygate.wait>
 	</properties>
