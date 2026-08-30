@@ -13,7 +13,9 @@ RUN ./mvnw -B --no-transfer-progress package -DskipTests
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
-RUN addgroup -S nitrogen && adduser -S -G nitrogen nitrogen
+RUN apk upgrade --no-cache libcrypto3 libssl3 openssl \
+    && addgroup -S nitrogen \
+    && adduser -S -G nitrogen nitrogen
 
 COPY --from=build /workspace/target/nitrogen-backend-*.jar /app/nitrogen-backend.jar
 
