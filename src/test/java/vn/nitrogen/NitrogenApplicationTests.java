@@ -40,10 +40,24 @@ class NitrogenApplicationTests extends TestcontainersBase {
         assertThat(get("/api/anything").status().value()).isEqualTo(401);
     }
 
+    @Test
+    void statelessApiEndpointsDoNotRequireCsrfTokenBeforeAuthentication() {
+        assertThat(post("/api/anything").status().value()).isEqualTo(401);
+    }
+
     private Response get(String path) {
         return RestClient.create()
                 .get()
                 .uri("http://localhost:" + port + path)
+                .exchange((request, response) ->
+                        new Response(response.getStatusCode(), response.bodyTo(String.class)));
+    }
+
+    private Response post(String path) {
+        return RestClient.create()
+                .post()
+                .uri("http://localhost:" + port + path)
+                .body("")
                 .exchange((request, response) ->
                         new Response(response.getStatusCode(), response.bodyTo(String.class)));
     }
