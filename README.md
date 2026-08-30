@@ -15,35 +15,45 @@ Nguồn sự thật về thiết kế: *Nitrogen System Design & Database Design
 ## Chạy
 
 ```bash
-# Cần PostgreSQL và RabbitMQ ở local, hoặc trỏ NITROGEN_DB_URL sang nơi khác
-./mvnw spring-boot:run -Dspring-boot.run.profiles=web
-./mvnw spring-boot:run -Dspring-boot.run.profiles=worker
+# Một lệnh dựng PostgreSQL, RabbitMQ, backend web và chạy smoke test.
+./scripts/local-up.sh
+
+# Tắt môi trường local nhưng giữ dữ liệu.
+./scripts/local-down.sh
+
+# Xoá volume local, yêu cầu xác nhận rõ ràng.
+./scripts/local-reset.sh --yes
 ```
 
-Khi chạy với RDS hoặc database ngoài local, tạo `.env.local` từ `.env.example`.
-Spring Boot tự đọc file này qua `spring.config.import`, kể cả khi bấm Run trong
-IntelliJ. Không commit `.env.local`.
+Script local tự tạo `.env.local` từ `.env.local.example` nếu file chưa tồn tại.
+Không commit `.env.local`.
 
 ```bash
-cp .env.example .env.local
-# sửa .env.local bằng endpoint/user/password thật
-scripts/run-web-dev.sh
+cp .env.local.example .env.local
+./scripts/run-web-dev.sh
 ```
 
 Khi chạy bằng IntelliJ Run/Debug Configuration, để Working directory là root của
-module `nitrogen-backend`. Nếu `.env.local` có `spring.profiles.active=web`, ô
-Active profiles có thể để trống; còn không thì nhập `web`.
+module `nitrogen-backend`, nhập Active profiles là `web,local`, và bật EnvFile
+trỏ tới `.env.local` nếu IDE chưa tự nạp file env.
 
-Một artifact, hai chế độ chạy — **không** phải hai ứng dụng:
+Một artifact, hai loại profile — **không** phải nhiều ứng dụng:
 
 | Profile | Vai trò |
 |---|---|
-| `web` | REST, sync grading, scheduler auto-submit, outbox publisher |
-| `worker` | RabbitMQ consumer (PDF / AI / batch regrade) |
-| `prod` | `flyway.enabled=false` — migration là step CI/CD riêng (§16.2.4) |
+| `web` | Chế độ REST, sync grading, scheduler auto-submit, outbox publisher |
+| `worker` | Chế độ RabbitMQ consumer (PDF / AI / batch regrade) |
+| `local` | Môi trường local, có default localhost an toàn |
+| `dev` | Môi trường development, đọc endpoint và credentials từ env/secret store |
+| `prod` | Môi trường production, `flyway.enabled=false`; migration là step CI/CD riêng (§16.2.4) |
+
+Ví dụ tổ hợp profile: `web,local`, `worker,dev`, `web,prod`.
 
 Profile `web` và `worker` đều kéo theo profile `core` (khai báo ở
 `spring.profiles.group`), nơi các facade cross-module `@Profile("core")` được đăng ký.
+
+Chi tiết biến môi trường và nơi lưu secret nằm ở
+[`docs/environment-and-secrets.md`](docs/environment-and-secrets.md).
 
 ## Test
 

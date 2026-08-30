@@ -1,0 +1,83 @@
+name: nitrogen-local
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${NITROGEN_DB_NAME:-nitrogen}
+      POSTGRES_USER: ${NITROGEN_DB_USER:-nitrogen}
+      POSTGRES_PASSWORD: ${NITROGEN_DB_PASSWORD:-nitrogen}
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 3s
+      retries: 24
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - nitrogen-local
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${NITROGEN_RABBIT_USER:-nitrogen}
+      RABBITMQ_DEFAULT_PASS: ${NITROGEN_RABBIT_PASSWORD:-nitrogen}
+    ports:
+      - "127.0.0.1:5672:5672"
+      - "127.0.0.1:${NITROGEN_RABBIT_MANAGEMENT_PORT:-15672}:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - nitrogen-local
+
+  backend-web:
+    image: nitrogen-backend:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: web,local
+      NITROGEN_ENVIRONMENT: local
+      NITROGEN_DB_URL: jdbc:postgresql://postgres:5432/${NITROGEN_DB_NAME:-nitrogen}
+      NITROGEN_DB_USER: ${NITROGEN_DB_USER:-nitrogen}
+      NITROGEN_DB_PASSWORD: ${NITROGEN_DB_PASSWORD:-nitrogen}
+      NITROGEN_DB_POOL_SIZE: ${NITROGEN_DB_POOL_SIZE:-5}
+      NITROGEN_RABBIT_HOST: rabbitmq
+      NITROGEN_RABBIT_PORT: "5672"
+      NITROGEN_RABBIT_USER: ${NITROGEN_RABBIT_USER:-nitrogen}
+      NITROGEN_RABBIT_PASSWORD: ${NITROGEN_RABBIT_PASSWORD:-nitrogen}
+      NITROGEN_RABBIT_HEALTH_ENABLED: ${NITROGEN_RABBIT_HEALTH_ENABLED:-true}
+      NITROGEN_LOG_LEVEL: ${NITROGEN_LOG_LEVEL:-INFO}
+    ports:
+      - "127.0.0.1:${NITROGEN_WEB_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health/readiness | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    networks:
+      - nitrogen-local
+
+volumes:
+  postgres-data:
+  rabbitmq-data:
+
+networks:
+  nitrogen-local:
+    driver: bridge

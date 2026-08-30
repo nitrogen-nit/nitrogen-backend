@@ -1,7 +1,7 @@
 # Ràng buộc production.
 
 application:
-  environment: ${NITROGEN_ENVIRONMENT:product}
+  environment: ${NITROGEN_ENVIRONMENT}
 
 spring:
   flyway:
@@ -23,5 +23,5 @@ management:
 
 logging:
   level:
-    vn.nitrogen: INFO
+    vn.nitrogen: ${NITROGEN_LOG_LEVEL:INFO}
     org.hibernate.SQL: WARN
