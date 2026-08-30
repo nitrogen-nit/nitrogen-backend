@@ -2,10 +2,9 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+source scripts/local-common.sh
 
-if [[ ! -f .env.local ]]; then
-  echo "Missing .env.local. Copy .env.example to .env.local and fill real values." >&2
-  exit 1
-fi
+create_env_if_missing
+load_env_file
 
-exec ./mvnw spring-boot:run -Dspring-boot.run.profiles=web
+exec ./mvnw spring-boot:run -Dspring-boot.run.profiles="${SPRING_PROFILES_ACTIVE:-web,local}"

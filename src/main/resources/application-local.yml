@@ -1,0 +1,29 @@
+# Local development profile. Values here are safe, local-only defaults.
+
+application:
+  environment: ${NITROGEN_ENVIRONMENT:local}
+
+spring:
+  datasource:
+    url: ${NITROGEN_DB_URL:jdbc:postgresql://localhost:5432/nitrogen}
+    username: ${NITROGEN_DB_USER:nitrogen}
+    password: ${NITROGEN_DB_PASSWORD:nitrogen}
+    hikari:
+      maximum-pool-size: ${NITROGEN_DB_POOL_SIZE:5}
+  flyway:
+    enabled: true
+  rabbitmq:
+    host: ${NITROGEN_RABBIT_HOST:localhost}
+    port: ${NITROGEN_RABBIT_PORT:5672}
+    username: ${NITROGEN_RABBIT_USER:nitrogen}
+    password: ${NITROGEN_RABBIT_PASSWORD:nitrogen}
+
+management:
+  health:
+    rabbit:
+      enabled: ${NITROGEN_RABBIT_HEALTH_ENABLED:true}
+
+logging:
+  level:
+    vn.nitrogen: ${NITROGEN_LOG_LEVEL:INFO}
+    org.hibernate.SQL: ${NITROGEN_HIBERNATE_SQL_LOG_LEVEL:WARN}

@@ -1,0 +1,21 @@
+# Shared development environment profile. All endpoints and credentials must be
+# provided by environment variables or secret stores.
+
+application:
+  environment: ${NITROGEN_ENVIRONMENT}
+
+spring:
+  flyway:
+    enabled: true
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+management:
+  endpoint:
+    health:
+      show-details: when-authorized
+
+logging:
+  level:
+    vn.nitrogen: ${NITROGEN_LOG_LEVEL:INFO}

@@ -1,7 +1,15 @@
 # Profile test: datasource và rabbit do @ServiceConnection của Testcontainers cấp.
 # Flyway bật để MigrateFromEmptyDbTest kiểm đúng đường "cài mới".
 
+application:
+  environment: test
+
 spring:
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: nitrogen
+    password: nitrogen
   jpa:
     hibernate:
       ddl-auto: validate
