@@ -10,6 +10,9 @@ spring:
     timeout-per-shutdown-phase: 30s
 
 nitrogen:
+  web:
+    scheme: ${NITROGEN_WEB_SCHEME:http}
+    host: ${NITROGEN_WEB_HOST:localhost}
   outbox:
     # Chu kỳ quét outbox. Chỉ web replica chạy publisher.
     publish-interval: PT5S

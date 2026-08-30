@@ -58,6 +58,8 @@ pipeline must run migration as a separate step before rolling out the app.
 |---|---:|---|---|---|---|
 | `NITROGEN_DB_NAME` | Local only | Variable | `nitrogen` | Local `.env.local` | Docker Compose PostgreSQL bootstrap |
 | `NITROGEN_WEB_PORT` | Local only | Variable | `8080` | Local `.env.local` | Docker Compose backend port |
+| `NITROGEN_WEB_SCHEME` | No | Variable | `http` | Local `.env.local` or runtime env | Startup URL displayed after web server starts |
+| `NITROGEN_WEB_HOST` | No | Variable | `localhost` | Local `.env.local` or runtime env | Startup URL displayed after web server starts |
 | `NITROGEN_RABBIT_MANAGEMENT_PORT` | Local only | Variable | `15672` | Local `.env.local` | RabbitMQ Management UI |
 | `NITROGEN_HIBERNATE_SQL_LOG_LEVEL` | No | Variable | `WARN` | Local `.env.local` | Local SQL logging |
 | `NITROGEN_DOCKER_OTLP_ENDPOINT` | No | Variable | `http://host.docker.internal:4318/v1/traces` | Shell override or local `.env.local` | Docker Compose backend OTLP endpoint override |
@@ -94,6 +96,10 @@ web,local
 
 If IntelliJ does not load `.env.local`, use the EnvFile plugin or set the same
 variables in the Run/Debug Configuration environment field.
+
+To open the backend automatically from IntelliJ, use the IDE's built-in launch
+browser option and point it at `http://localhost:8080` or the value printed by
+the startup log.
 
 ## Shared Dev On AWS
 

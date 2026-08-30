@@ -22,5 +22,6 @@ ${AnsiColor.DEFAULT}${AnsiStyle.NORMAL}
  Spring Boot : ${spring-boot.version}
  Runtime     : Java ${java.version}
  Environment : ${application.environment:${spring.profiles.active:default}}
+ HTTP Port   : ${server.port:8080}
 ──────────────────────────────────────────────────────────────────────────────
 ${AnsiColor.YELLOW}                    Powered by Nitrogen Engineering${AnsiColor.DEFAULT}
