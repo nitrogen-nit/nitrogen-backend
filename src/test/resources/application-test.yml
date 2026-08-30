@@ -3,6 +3,7 @@
 
 application:
   environment: test
+  version: test
 
 spring:
   rabbitmq:
@@ -19,6 +20,18 @@ spring:
     locations: classpath:db/migration
     schemas: flyway_history
     default-schema: flyway_history
+
+management:
+  opentelemetry:
+    enabled: false
+  tracing:
+    enabled: false
+    export:
+      enabled: false
+      otlp:
+        enabled: false
+    sampling:
+      probability: 0.0
 
 logging:
   level:

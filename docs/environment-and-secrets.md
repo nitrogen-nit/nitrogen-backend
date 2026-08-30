@@ -47,6 +47,10 @@ pipeline must run migration as a separate step before rolling out the app.
 | `NITROGEN_RABBIT_PASSWORD` | local-only password | broker password | broker password | Yes | Secret | `local-rabbit-password` | Local `.env.local`; GitHub Environment secret only when needed by deploy; AWS Secrets Manager or SSM SecureString `/nitrogen/dev/rabbit/password`; Hetzner host secret file/env | Spring AMQP |
 | `NITROGEN_RABBIT_HEALTH_ENABLED` | `true` | `false` for web, `true` for worker | `false` for web, `true` for worker | Yes | Variable | `false` | Local `.env.local`; GitHub Environment variable; AWS SSM `/nitrogen/dev/rabbit/health-enabled`; Hetzner runtime env | Actuator health |
 | `NITROGEN_LOG_LEVEL` | `INFO` | `INFO` or `DEBUG` temporarily | `INFO` | Yes | Variable | `INFO` | Local `.env.local`; GitHub Environment variable; AWS SSM `/nitrogen/dev/log-level`; Hetzner runtime env | Logging |
+| `NITROGEN_APPLICATION_VERSION` | `local` | image tag or git sha | release tag or git sha | Yes | Variable | `sha-abc1234` | Local `.env.local`; GitHub Environment variable; AWS SSM `/nitrogen/dev/application-version`; Hetzner runtime env | Banner, metrics, structured logs, OpenTelemetry resource |
+| `NITROGEN_TRACING_ENABLED` | `false` | `true` | `true` | Yes | Variable | `true` | Local `.env.local`; GitHub Environment variable; AWS SSM `/nitrogen/dev/tracing/enabled`; Hetzner runtime env | Micrometer/OpenTelemetry tracing |
+| `NITROGEN_TRACING_SAMPLING_PROBABILITY` | `0.0` | `1.0` | configurable, usually `0.1` | Yes | Variable | `0.1` | Local `.env.local`; GitHub Environment variable; AWS SSM `/nitrogen/dev/tracing/sampling-probability`; Hetzner runtime env | Trace sampling |
+| `NITROGEN_OTLP_ENDPOINT` | `http://localhost:4318/v1/traces` | collector URL | collector URL | Yes when tracing enabled | Variable | `http://otel-collector:4318/v1/traces` | Local `.env.local`; GitHub Environment variable; AWS SSM `/nitrogen/dev/otlp/endpoint`; Hetzner runtime env | OTLP trace export |
 
 ## Optional Local Variables
 
@@ -56,6 +60,7 @@ pipeline must run migration as a separate step before rolling out the app.
 | `NITROGEN_WEB_PORT` | Local only | Variable | `8080` | Local `.env.local` | Docker Compose backend port |
 | `NITROGEN_RABBIT_MANAGEMENT_PORT` | Local only | Variable | `15672` | Local `.env.local` | RabbitMQ Management UI |
 | `NITROGEN_HIBERNATE_SQL_LOG_LEVEL` | No | Variable | `WARN` | Local `.env.local` | Local SQL logging |
+| `NITROGEN_DOCKER_OTLP_ENDPOINT` | No | Variable | `http://host.docker.internal:4318/v1/traces` | Shell override or local `.env.local` | Docker Compose backend OTLP endpoint override |
 
 ## Local Workflow
 

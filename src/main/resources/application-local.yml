@@ -19,11 +19,23 @@ spring:
     password: ${NITROGEN_RABBIT_PASSWORD:nitrogen}
 
 management:
+  opentelemetry:
+    enabled: ${NITROGEN_TRACING_ENABLED:false}
+  tracing:
+    enabled: ${NITROGEN_TRACING_ENABLED:false}
+    export:
+      enabled: ${NITROGEN_TRACING_ENABLED:false}
+      otlp:
+        enabled: ${NITROGEN_TRACING_ENABLED:false}
+    sampling:
+      probability: ${NITROGEN_TRACING_SAMPLING_PROBABILITY:0.0}
   health:
     rabbit:
       enabled: ${NITROGEN_RABBIT_HEALTH_ENABLED:true}
 
 logging:
+  pattern:
+    level: "%5p [cid:%X{correlationId:-none}]"
   level:
     vn.nitrogen: ${NITROGEN_LOG_LEVEL:INFO}
     org.hibernate.SQL: ${NITROGEN_HIBERNATE_SQL_LOG_LEVEL:WARN}

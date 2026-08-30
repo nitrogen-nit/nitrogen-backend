@@ -61,16 +61,51 @@ management:
     web:
       exposure:
         include: health,info,metrics,prometheus,modulith
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  otlp:
+    metrics:
+      export:
+        # Metrics are pulled by Prometheus; OTLP is reserved for traces in this baseline.
+        enabled: false
   endpoint:
     health:
       probes:
         enabled: true             # bật /actuator/health/liveness và /readiness
       show-details: when-authorized
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState,db
   health:
     # Rabbit không phải điều kiện readiness của web replica: web vẫn phục vụ
     # được request đọc khi broker chết, đẩy event thì đã có outbox đỡ.
     rabbit:
       enabled: ${NITROGEN_RABBIT_HEALTH_ENABLED:false}
+  info:
+    env:
+      enabled: true
+  opentelemetry:
+    enabled: ${NITROGEN_TRACING_ENABLED:false}
+    resource-attributes:
+      service.name: ${spring.application.name}
+      service.version: ${application.version:unknown}
+      deployment.environment.name: ${application.environment}
+    tracing:
+      export:
+        otlp:
+          endpoint: ${NITROGEN_OTLP_ENDPOINT:http://localhost:4318/v1/traces}
+  tracing:
+    enabled: ${NITROGEN_TRACING_ENABLED:false}
+    export:
+      enabled: ${NITROGEN_TRACING_ENABLED:false}
+      otlp:
+        enabled: ${NITROGEN_TRACING_ENABLED:false}
+    sampling:
+      probability: ${NITROGEN_TRACING_SAMPLING_PROBABILITY:0.0}
 
 springdoc:
   api-docs:
@@ -86,7 +121,28 @@ nitrogen:
 
 application:
   environment: ${NITROGEN_ENVIRONMENT}
+  version: ${NITROGEN_APPLICATION_VERSION:${spring.application.version:unknown}}
 
 logging:
   level:
     vn.nitrogen: ${NITROGEN_LOG_LEVEL:INFO}
+  structured:
+    ecs:
+      service:
+        name: ${spring.application.name}
+        version: ${application.version}
+        environment: ${application.environment}
+    json:
+      context:
+        include: false
+      customizer:
+        - vn.nitrogen.platform.observability.NitrogenStructuredLoggingJsonMembersCustomizer
+      add:
+        service: ${spring.application.name}
+        environment: ${application.environment}
+        applicationVersion: ${application.version}
+      rename:
+        "@timestamp": timestamp
+        "logger_name": logger
+        "log.logger": logger
+        "log.level": level
