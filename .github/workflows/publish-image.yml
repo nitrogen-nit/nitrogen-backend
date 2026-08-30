@@ -86,7 +86,7 @@ jobs:
           tags: local/nitrogen-backend:${{ steps.meta.outputs.git_sha }}
 
       - name: Scan container image
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: local/nitrogen-backend:${{ steps.meta.outputs.git_sha }}
           vuln-type: os,library
@@ -95,7 +95,7 @@ jobs:
           exit-code: "1"
 
       - name: Generate CycloneDX image SBOM
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: local/nitrogen-backend:${{ steps.meta.outputs.git_sha }}
           format: cyclonedx
@@ -103,7 +103,7 @@ jobs:
           exit-code: "0"
 
       - name: Generate SPDX image SBOM
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: local/nitrogen-backend:${{ steps.meta.outputs.git_sha }}
           format: spdx-json
