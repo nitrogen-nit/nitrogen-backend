@@ -6,8 +6,10 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import javax.sql.DataSource;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -24,6 +26,8 @@ import vn.nitrogen.support.TestcontainersBase;
  * lên được nếu Hibernate thấy mapping lệch với schema Flyway vừa tạo.
  */
 @SpringBootTest
+@Tag("docker")
+@Tag("migration")
 class MigrateFromEmptyDbTest extends TestcontainersBase {
 
     private static final List<String> MODULE_SCHEMAS = List.of(
@@ -49,6 +53,30 @@ class MigrateFromEmptyDbTest extends TestcontainersBase {
     @Test
     void createsIntegrationOutboxTables() throws Exception {
         assertThat(tableNames("integration")).contains("outbox_events", "processed_messages");
+    }
+
+    @Test
+    void appliesFlywayMigrationsOnceAndInOrder() throws Exception {
+        List<String> versions = query("""
+                SELECT version
+                FROM flyway_history.flyway_schema_history
+                WHERE version IS NOT NULL
+                ORDER BY installed_rank
+                """);
+
+        assertThat(versions)
+                .isNotEmpty()
+                .doesNotHaveDuplicates()
+                .isSortedAccordingTo(Comparator.naturalOrder());
+    }
+
+    @Test
+    void hasNoFailedFlywayMigration() throws Exception {
+        assertThat(query("""
+                SELECT script
+                FROM flyway_history.flyway_schema_history
+                WHERE success = false
+                """)).isEmpty();
     }
 
     @Test
@@ -78,6 +106,22 @@ class MigrateFromEmptyDbTest extends TestcontainersBase {
                 "uk_attempt_active_origin",
                 "uk_attempt_resume_key_hash",
                 "uk_attempt_idempotency");
+    }
+
+    @Test
+    void createsIdentityUserUniquenessAndChecks() throws Exception {
+        assertThat(query("""
+                SELECT conname
+                FROM pg_constraint
+                WHERE conrelid = 'identity.users'::regclass
+                """)).contains("users_pkey", "chk_user_status", "chk_user_version");
+
+        assertThat(query("""
+                SELECT indexname
+                FROM pg_indexes
+                WHERE schemaname = 'identity'
+                  AND tablename = 'users'
+                """)).contains("uk_users_email");
     }
 
     private List<String> schemaNames() throws Exception {

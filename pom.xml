@@ -20,6 +20,22 @@
 		<archunit.version>1.4.1</archunit.version>
 		<springdoc.version>2.8.13</springdoc.version>
 		<json-schema-validator.version>1.5.8</json-schema-validator.version>
+		<rabbit-amqp-client.version>5.33.1</rabbit-amqp-client.version>
+		<maven-enforcer-plugin.version>3.6.2</maven-enforcer-plugin.version>
+		<spotless-maven-plugin.version>2.44.5</spotless-maven-plugin.version>
+		<spotbugs-maven-plugin.version>4.9.3.0</spotbugs-maven-plugin.version>
+		<jacoco-maven-plugin.version>0.8.13</jacoco-maven-plugin.version>
+		<cyclonedx-maven-plugin.version>2.9.1</cyclonedx-maven-plugin.version>
+		<sonar-maven-plugin.version>5.1.0.4751</sonar-maven-plugin.version>
+		<test.groups></test.groups>
+		<test.excludedGroups></test.excludedGroups>
+		<jacoco.line.minimum>0.80</jacoco.line.minimum>
+		<jacoco.branch.minimum>0.70</jacoco.branch.minimum>
+		<sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+		<sonar.coverage.exclusions>**/*Application.java,**/*Config.java,**/api/**,**/dto/**,**/package-info.java</sonar.coverage.exclusions>
+		<sonar.projectKey>nitrogen-nit_nitrogen-backend</sonar.projectKey>
+		<sonar.projectName>nitrogen-backend</sonar.projectName>
+		<sonar.qualitygate.wait>true</sonar.qualitygate.wait>
 	</properties>
 
 	<dependencies>
@@ -214,13 +230,156 @@
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-enforcer-plugin</artifactId>
+				<version>${maven-enforcer-plugin.version}</version>
+				<executions>
+					<execution>
+						<id>enforce-build-runtime</id>
+						<goals>
+							<goal>enforce</goal>
+						</goals>
+						<configuration>
+							<rules>
+								<requireJavaVersion>
+									<version>[21,)</version>
+								</requireJavaVersion>
+								<requireMavenVersion>
+									<version>[3.9.0,)</version>
+								</requireMavenVersion>
+							</rules>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>com.diffplug.spotless</groupId>
+				<artifactId>spotless-maven-plugin</artifactId>
+				<version>${spotless-maven-plugin.version}</version>
+				<configuration>
+					<lineEndings>UNIX</lineEndings>
+					<formats>
+						<format>
+							<includes>
+								<include>pom.xml</include>
+								<include>README.md</include>
+								<include>contracts/**/*.md</include>
+								<include>.github/**/*.yml</include>
+								<include>src/**/*.java</include>
+								<include>src/**/*.yml</include>
+								<include>src/**/*.properties</include>
+							</includes>
+							<trimTrailingWhitespace/>
+							<endWithNewline/>
+						</format>
+					</formats>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>com.github.spotbugs</groupId>
+				<artifactId>spotbugs-maven-plugin</artifactId>
+				<version>${spotbugs-maven-plugin.version}</version>
+				<configuration>
+					<effort>Max</effort>
+					<threshold>High</threshold>
+					<xmlOutput>true</xmlOutput>
+					<failOnError>true</failOnError>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>${jacoco-maven-plugin.version}</version>
+				<configuration>
+					<excludes>
+						<exclude>vn/nitrogen/**/*Application*</exclude>
+						<exclude>vn/nitrogen/**/*Config*</exclude>
+						<exclude>vn/nitrogen/**/api/**/*</exclude>
+						<exclude>vn/nitrogen/**/dto/**/*</exclude>
+					</excludes>
+				</configuration>
+				<executions>
+					<execution>
+						<id>prepare-agent</id>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>jacoco-report</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>jacoco-check</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+						<configuration>
+							<rules>
+								<rule>
+									<element>BUNDLE</element>
+									<limits>
+										<limit>
+											<counter>LINE</counter>
+											<value>COVEREDRATIO</value>
+											<minimum>${jacoco.line.minimum}</minimum>
+										</limit>
+										<limit>
+											<counter>BRANCH</counter>
+											<value>COVEREDRATIO</value>
+											<minimum>${jacoco.branch.minimum}</minimum>
+										</limit>
+									</limits>
+								</rule>
+							</rules>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.cyclonedx</groupId>
+				<artifactId>cyclonedx-maven-plugin</artifactId>
+				<version>${cyclonedx-maven-plugin.version}</version>
+				<configuration>
+					<includeBomSerialNumber>true</includeBomSerialNumber>
+					<outputFormat>json</outputFormat>
+					<outputName>bom</outputName>
+					<schemaVersion>1.6</schemaVersion>
+				</configuration>
+				<executions>
+					<execution>
+						<id>make-sbom</id>
+						<phase>package</phase>
+						<goals>
+							<goal>makeAggregateBom</goal>
+						</goals>
+						<configuration>
+							<classifier>sbom</classifier>
+							<outputDirectory>${project.build.directory}</outputDirectory>
+							<outputName>bom</outputName>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.sonarsource.scanner.maven</groupId>
+				<artifactId>sonar-maven-plugin</artifactId>
+				<version>${sonar-maven-plugin.version}</version>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
 					<!--
 					  Test cần Docker (Testcontainers) gắn tag "docker".
-					  Máy không có Docker: ./mvnw verify -DexcludedGroups=docker
+					  Máy không có Docker: ./mvnw verify -Pno-docker
 					-->
+					<groups>${test.groups}</groups>
 					<excludedGroups>${test.excludedGroups}</excludedGroups>
+					<failIfNoTests>true</failIfNoTests>
 				</configuration>
 			</plugin>
 		</plugins>
@@ -228,14 +387,35 @@
 
 	<profiles>
 		<profile>
-			<id>default-groups</id>
-			<activation><activeByDefault>true</activeByDefault></activation>
-			<properties><test.excludedGroups></test.excludedGroups></properties>
+			<id>unit</id>
+			<properties>
+				<test.groups>unit</test.groups>
+			</properties>
+		</profile>
+		<profile>
+			<id>architecture</id>
+			<properties>
+				<test.groups>architecture</test.groups>
+			</properties>
+		</profile>
+		<profile>
+			<id>integration</id>
+			<properties>
+				<test.groups>integration</test.groups>
+			</properties>
+		</profile>
+		<profile>
+			<id>migration</id>
+			<properties>
+				<test.groups>migration</test.groups>
+			</properties>
 		</profile>
 		<!-- ./mvnw verify -Pno-docker  → bỏ qua test cần Docker -->
 		<profile>
 			<id>no-docker</id>
-			<properties><test.excludedGroups>docker</test.excludedGroups></properties>
+			<properties>
+				<test.excludedGroups>docker</test.excludedGroups>
+			</properties>
 		</profile>
 	</profiles>
 

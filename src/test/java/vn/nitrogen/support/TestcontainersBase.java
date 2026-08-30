@@ -18,7 +18,7 @@ import org.testcontainers.utility.DockerImageName;
  * <p>Container khai báo {@code static} nên dùng chung cho mọi test class kế thừa
  * — khởi động một lần cho cả build thay vì một lần cho mỗi class.
  *
- * <p>PostgreSQL 16 khớp môi trường triển khai.
+ * <p>PostgreSQL 18 khớp RDS development hiện tại.
  */
 @Tag("docker")
 @Testcontainers
@@ -27,16 +27,14 @@ public abstract class TestcontainersBase {
 
     @ServiceConnection
     protected static final PostgreSQLContainer<?> POSTGRES =
-            new PostgreSQLContainer<>(DockerImageName.parse("postgres:16-alpine"))
+            new PostgreSQLContainer<>(DockerImageName.parse("postgres:18-alpine"))
                     .withDatabaseName("nitrogen")
                     .withUsername("nitrogen")
-                    .withPassword("nitrogen")
-                    .withReuse(true);
+                    .withPassword("nitrogen");
 
     @ServiceConnection
     protected static final RabbitMQContainer RABBITMQ =
-            new RabbitMQContainer(DockerImageName.parse("rabbitmq:3.13-management-alpine"))
-                    .withReuse(true);
+            new RabbitMQContainer(DockerImageName.parse("rabbitmq:3.13-management-alpine"));
 
     static {
         POSTGRES.start();
