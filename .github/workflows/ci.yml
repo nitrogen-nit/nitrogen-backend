@@ -109,6 +109,31 @@ jobs:
           path: target/surefire-reports/**
           if-no-files-found: ignore
 
+  backend-observability-test:
+    name: backend-observability-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+
+      - name: Run observability contract tests
+        run: >
+          ./mvnw $MAVEN_ARGS test
+          -Dtest=CorrelationIdFilterTest,MessageEnvelopeTest,ObservabilityEndpointIntegrationTest,NitrogenApplicationTests
+
+      - name: Upload observability test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-observability-test-reports
+          path: target/surefire-reports/**
+          if-no-files-found: ignore
+
   backend-migration-test:
     name: backend-migration-test
     runs-on: ubuntu-latest
@@ -140,6 +165,7 @@ jobs:
       - backend-unit-test
       - backend-architecture-test
       - backend-integration-test
+      - backend-observability-test
       - backend-migration-test
     steps:
       - uses: actions/checkout@v4
@@ -186,6 +212,7 @@ jobs:
       - backend-unit-test
       - backend-architecture-test
       - backend-integration-test
+      - backend-observability-test
       - backend-migration-test
     env:
       SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}

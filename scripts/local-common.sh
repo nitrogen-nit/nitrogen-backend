@@ -85,7 +85,7 @@ load_env_file() {
 
     local key="${line%%=*}"
     local value="${line#*=}"
-    if [[ "${key}" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
+    if [[ "${key}" =~ ^[A-Za-z_][A-Za-z0-9_]*$ && -z "${!key+x}" ]]; then
       export "${key}=${value}"
     fi
   done < "${env_file}"

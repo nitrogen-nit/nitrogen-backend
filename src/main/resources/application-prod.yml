@@ -13,6 +13,16 @@ spring:
       ddl-auto: validate
 
 management:
+  opentelemetry:
+    enabled: ${NITROGEN_TRACING_ENABLED:true}
+  tracing:
+    enabled: ${NITROGEN_TRACING_ENABLED:true}
+    export:
+      enabled: ${NITROGEN_TRACING_ENABLED:true}
+      otlp:
+        enabled: ${NITROGEN_TRACING_ENABLED:true}
+    sampling:
+      probability: ${NITROGEN_TRACING_SAMPLING_PROBABILITY:0.1}
   endpoints:
     web:
       exposure:
@@ -22,6 +32,9 @@ management:
       show-details: never
 
 logging:
+  structured:
+    format:
+      console: logstash
   level:
     vn.nitrogen: ${NITROGEN_LOG_LEVEL:INFO}
     org.hibernate.SQL: WARN

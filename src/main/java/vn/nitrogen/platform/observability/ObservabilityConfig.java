@@ -8,20 +8,22 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Gắn tag chung cho toàn bộ metric để phân biệt web replica và worker replica
- * khi cùng một artifact chạy hai chế độ.
- *
- * <p>TODO: bổ sung tracing sampling, log correlation với correlationId của
- * MessageEnvelope.
+ * Gắn tag chung cho toàn bộ metric để phân biệt runtime và môi trường khi cùng
+ * một artifact chạy nhiều chế độ.
  */
 @Configuration
 public class ObservabilityConfig {
 
     @Bean
     public MeterRegistryCustomizer<MeterRegistry> commonTags(
-            @Value("${spring.application.name:nitrogen-backend}") String applicationName) {
+            @Value("${spring.application.name:nitrogen-backend}") String applicationName,
+            @Value("${application.environment:unknown}") String environment,
+            @Value("${application.version:unknown}") String version) {
         return registry -> registry.config()
                 .meterFilter(MeterFilter.commonTags(
-                        io.micrometer.core.instrument.Tags.of("application", applicationName)));
+                        io.micrometer.core.instrument.Tags.of(
+                                "application", applicationName,
+                                "environment", environment,
+                                "version", version)));
     }
 }

@@ -33,7 +33,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET,
                                 "/actuator/health",
                                 "/actuator/health/**",
-                                "/actuator/info").permitAll()
+                                "/actuator/info",
+                                "/actuator/prometheus").permitAll()
                         .requestMatchers(
                                 "/v3/api-docs",
                                 "/v3/api-docs/**",
