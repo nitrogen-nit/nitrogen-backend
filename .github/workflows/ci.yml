@@ -189,6 +189,7 @@ jobs:
       - backend-migration-test
     env:
       SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+      SONAR_ORGANIZATION: ${{ vars.SONAR_ORGANIZATION }}
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     steps:
       - uses: actions/checkout@v4
@@ -205,12 +206,14 @@ jobs:
         run: |
           set -euo pipefail
           test -n "$SONAR_HOST_URL"
+          test -n "$SONAR_ORGANIZATION"
           test -n "$SONAR_TOKEN"
 
       - name: Run tests, coverage, and SonarQube quality gate
         run: >
           ./mvnw $MAVEN_ARGS verify sonar:sonar
           -Dsonar.host.url="$SONAR_HOST_URL"
+          -Dsonar.organization="$SONAR_ORGANIZATION"
           -Dsonar.token="$SONAR_TOKEN"
           -Dsonar.qualitygate.wait=true
 
