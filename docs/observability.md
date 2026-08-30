@@ -124,6 +124,7 @@ NITROGEN_DOCKER_OTLP_ENDPOINT=http://host.docker.internal:4318/v1/traces \
 
 For IntelliJ runs, use `SPRING_PROFILES_ACTIVE=web,local` and
 `NITROGEN_OTLP_ENDPOINT=http://localhost:4318/v1/traces` when tracing is enabled.
+The application logs the local backend URL after the embedded web server starts.
 
 ## Troubleshooting
 
