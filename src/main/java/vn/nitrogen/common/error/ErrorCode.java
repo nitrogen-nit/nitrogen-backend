@@ -27,6 +27,7 @@ public enum ErrorCode {
     UNSUPPORTED_SCHEMA_VERSION(HttpStatus.BAD_REQUEST),
 
     // ── chung ──
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND),
     VALIDATION_FAILED(HttpStatus.BAD_REQUEST),
     ACCESS_DENIED(HttpStatus.FORBIDDEN),
     RATE_LIMITED(HttpStatus.TOO_MANY_REQUESTS),

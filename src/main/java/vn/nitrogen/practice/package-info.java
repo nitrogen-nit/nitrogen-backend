@@ -10,6 +10,6 @@
  * này qua named interface {@code api} và {@code dto}; mọi thứ còn lại là nội bộ.
  */
 @org.springframework.modulith.ApplicationModule(
-        allowedDependencies = {"common", "platform"},
+        allowedDependencies = {"common", "platform", "identity::api"},
         displayName = "Practice")
 package vn.nitrogen.practice;
