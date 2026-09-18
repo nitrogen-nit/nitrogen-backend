@@ -1,9 +1,235 @@
-# Placeholder. springdoc sinh spec thật tại /v3/api-docs khi app chạy.
-# CI (contract-check) dump spec đó và diff với file này — lệch thì fail build,
-# nên contract và implementation không thể trôi khỏi nhau.
 openapi: 3.1.0
 info:
   title: Nitrogen API
   version: 0.0.1-SNAPSHOT
   description: Nền tảng học và luyện thi Hoá học THPT.
-paths: {}
+paths:
+  /api/v1/practice-attempts:
+    post:
+      tags:
+        - practice-attempts
+      summary: Start a practice attempt
+      operationId: startPracticeAttempt
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartPracticeAttemptRequest"
+      responses:
+        "201":
+          description: Practice attempt started.
+          headers:
+            Location:
+              description: Stable URL of the created attempt.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PracticeAttemptSummary"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          description: Authentication is required.
+        "404":
+          $ref: "#/components/responses/BusinessError"
+        "409":
+          $ref: "#/components/responses/BusinessError"
+    get:
+      tags:
+        - practice-attempts
+      summary: List recent practice attempts for a user
+      operationId: listRecentPracticeAttempts
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20
+            default: 20
+      responses:
+        "200":
+          description: Recent attempts.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PracticeAttemptSummary"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          description: Authentication is required.
+  /api/v1/practice-attempts/{attemptId}:
+    get:
+      tags:
+        - practice-attempts
+      summary: Get a practice attempt
+      operationId: getPracticeAttempt
+      parameters:
+        - name: attemptId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Practice attempt.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PracticeAttemptSummary"
+        "401":
+          description: Authentication is required.
+        "404":
+          $ref: "#/components/responses/BusinessError"
+components:
+  responses:
+    BusinessError:
+      description: Business error.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+    ValidationError:
+      description: Request validation failed.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetail"
+  schemas:
+    StartPracticeAttemptRequest:
+      type: object
+      required:
+        - userId
+        - attemptKind
+        - originType
+        - originId
+      properties:
+        userId:
+          type: string
+          format: uuid
+        attemptKind:
+          type: string
+          enum:
+            - TOPIC_PRACTICE
+            - EXAM_PRACTICE
+            - REVIEW
+        originType:
+          type: string
+          enum:
+            - CURRICULUM_NODE
+            - EXAM_VARIANT
+            - CUSTOM_SET
+        originId:
+          type: string
+          format: uuid
+        idempotencyKey:
+          type: string
+          maxLength: 100
+        deadlineAt:
+          type: string
+          format: date-time
+    PracticeAttemptSummary:
+      type: object
+      required:
+        - id
+        - userId
+        - attemptKind
+        - originType
+        - originId
+        - attemptNo
+        - status
+        - gradingStatus
+        - scoreFinal
+        - startedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        attemptKind:
+          type: string
+        originType:
+          type: string
+        originId:
+          type: string
+          format: uuid
+        attemptNo:
+          type: integer
+          minimum: 1
+        status:
+          type: string
+          enum:
+            - IN_PROGRESS
+            - SUBMITTED
+            - COMPLETED
+            - EXPIRED
+            - CANCELLED
+        gradingStatus:
+          type: string
+          enum:
+            - NOT_REQUIRED
+            - PENDING_AUTO
+            - PENDING_MANUAL
+            - PARTIALLY_GRADED
+            - GRADED
+            - FAILED
+        score:
+          type:
+            - number
+            - "null"
+        maxScore:
+          type:
+            - number
+            - "null"
+        scoreFinal:
+          type: boolean
+        startedAt:
+          type: string
+          format: date-time
+        submittedAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+        completedAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+    ProblemDetail:
+      type: object
+      required:
+        - type
+        - status
+        - detail
+        - errorCode
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        errorCode:
+          type: string
+        fields:
+          type: array
+          items:
+            type: string

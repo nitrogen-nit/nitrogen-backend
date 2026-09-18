@@ -1,10 +1,14 @@
 package vn.nitrogen.common.web;
 
 import java.net.URI;
+import java.util.List;
 
+import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -37,6 +41,33 @@ public class GlobalExceptionHandler {
         return problem;
     }
 
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ProblemDetail handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
+        List<String> fields = ex.getBindingResult().getFieldErrors().stream()
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .toList();
+
+        ProblemDetail problem = validationProblem("Request validation failed.");
+        problem.setProperty("fields", fields);
+        return problem;
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ProblemDetail handleConstraintViolation(ConstraintViolationException ex) {
+        List<String> violations = ex.getConstraintViolations().stream()
+                .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
+                .toList();
+
+        ProblemDetail problem = validationProblem("Request validation failed.");
+        problem.setProperty("fields", violations);
+        return problem;
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ProblemDetail handleUnreadableMessage(HttpMessageNotReadableException ex) {
+        return validationProblem("Request body is invalid.");
+    }
+
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleUnexpected(Exception ex) {
         log.error("Unhandled exception", ex);
@@ -47,6 +78,13 @@ public class GlobalExceptionHandler {
                 ErrorCode.INTERNAL_ERROR.status(), "Đã xảy ra lỗi không mong đợi.");
         problem.setType(URI.create(PROBLEM_BASE + "internal_error"));
         problem.setProperty("errorCode", ErrorCode.INTERNAL_ERROR.name());
+        return problem;
+    }
+
+    private static ProblemDetail validationProblem(String detail) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(ErrorCode.VALIDATION_FAILED.status(), detail);
+        problem.setType(URI.create(PROBLEM_BASE + "validation_failed"));
+        problem.setProperty("errorCode", ErrorCode.VALIDATION_FAILED.name());
         return problem;
     }
 }
