@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Min;
 import java.net.URI;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +22,7 @@ import vn.nitrogen.practice.service.PracticeAttemptService;
 
 @RestController
 @Validated
+@Profile("web")
 @RequestMapping("/api/v1/practice-attempts")
 public class PracticeAttemptController {
 
