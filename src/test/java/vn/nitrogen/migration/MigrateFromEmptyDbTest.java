@@ -124,6 +124,68 @@ class MigrateFromEmptyDbTest extends TestcontainersBase {
                 """)).contains("uk_users_email");
     }
 
+    @Test
+    void createsIdentityAccountTables() throws Exception {
+        assertThat(tableNames("identity")).contains(
+                "users",
+                "user_roles",
+                "oauth_accounts",
+                "refresh_tokens",
+                "password_reset_tokens");
+    }
+
+    @Test
+    void expandsIdentityUsersWithAccountColumns() throws Exception {
+        assertThat(query("""
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_schema = 'identity'
+                  AND table_name = 'users'
+                """)).contains(
+                "password_hash",
+                "email_verified",
+                "email_verified_at",
+                "timezone",
+                "last_login_at");
+    }
+
+    @Test
+    void createsIdentityAccountIndexes() throws Exception {
+        assertThat(query("""
+                SELECT indexname
+                FROM pg_indexes
+                WHERE schemaname = 'identity'
+                """)).contains(
+                "ix_user_roles_role",
+                "uk_oauth_provider_subject",
+                "ix_oauth_user_id",
+                "uk_refresh_tokens_hash",
+                "ix_refresh_tokens_user_active",
+                "uk_password_reset_tokens_hash",
+                "ix_password_reset_tokens_user_active");
+    }
+
+    @Test
+    void createsIdentityAccountConstraints() throws Exception {
+        assertThat(query("""
+                SELECT conname
+                FROM pg_constraint
+                WHERE connamespace = 'identity'::regnamespace
+                """)).contains(
+                "chk_users_email_verified_at",
+                "chk_users_timezone_not_blank",
+                "chk_user_roles_role_not_blank",
+                "chk_oauth_provider_not_blank",
+                "chk_oauth_subject_not_blank",
+                "chk_oauth_version",
+                "chk_refresh_token_hash_not_blank",
+                "chk_refresh_token_expiry",
+                "chk_refresh_token_version",
+                "chk_reset_token_hash_not_blank",
+                "chk_reset_token_expiry",
+                "chk_reset_token_version");
+    }
+
     private List<String> schemaNames() throws Exception {
         return query("SELECT schema_name FROM information_schema.schemata");
     }
