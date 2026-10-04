@@ -1,0 +1,196 @@
+=== 1. CẤU TRÚC MODULE ===
+NitrogenApplication.java
+administration/api/AuditApi.java
+administration/api/package-info.java
+administration/dto/AuditEventView.java
+administration/dto/package-info.java
+administration/package-info.java
+assessment/api/AnswerSpecApi.java
+assessment/api/ExerciseVersionApi.java
+assessment/api/ScoringPolicyApi.java
+assessment/api/package-info.java
+assessment/dto/AnswerSpecView.java
+assessment/dto/ExerciseVersionSummary.java
+assessment/dto/ScoringPolicySummary.java
+assessment/dto/package-info.java
+assessment/package-info.java
+chemistry/package-info.java
+common/api/ModuleApi.java
+common/domain/AbstractAuditingEntity.java
+common/domain/AbstractIdentifiableEntity.java
+common/domain/ModuleReference.java
+common/error/BusinessException.java
+common/error/ErrorCode.java
+common/jpa/JsonbConverter.java
+common/package-info.java
+common/util/UuidV7.java
+common/web/GlobalExceptionHandler.java
+content/package-info.java
+curriculum/api/CurriculumNodeApi.java
+curriculum/api/package-info.java
+curriculum/dto/CurriculumNodeSummary.java
+curriculum/dto/package-info.java
+curriculum/package-info.java
+examination/api/ExamVariantApi.java
+examination/api/package-info.java
+examination/dto/ExamVariantSummary.java
+examination/dto/package-info.java
+examination/package-info.java
+flashcard/package-info.java
+identity/api/IdentityQueryApi.java
+identity/api/package-info.java
+identity/dto/UserSummary.java
+identity/dto/package-info.java
+identity/package-info.java
+integration/api/AsyncJobApi.java
+integration/api/OutboxApi.java
+integration/api/package-info.java
+integration/dto/AsyncJobView.java
+integration/dto/OutboxEventView.java
+integration/dto/package-info.java
+integration/package-info.java
+platform/job/AsyncJobHandler.java
+platform/job/SchedulingConfig.java
+platform/messaging/MessageEnvelope.java
+platform/messaging/RabbitConfig.java
+platform/observability/CorrelationId.java
+platform/observability/CorrelationIdFilter.java
+platform/observability/NitrogenStructuredLoggingJsonMembersCustomizer.java
+platform/observability/ObservabilityConfig.java
+platform/openapi/OpenApiConfig.java
+platform/outbox/OutboxPublisher.java
+platform/package-info.java
+platform/persistence/JpaAuditingConfig.java
+platform/runtime/WebEndpoint.java
+platform/runtime/WebStartupReporter.java
+platform/security/SecurityConfig.java
+practice/api/AttemptTopicResultApi.java
+practice/api/PracticeAttemptQueryApi.java
+practice/api/PracticeGradingApi.java
+practice/api/package-info.java
+practice/dto/AttemptTopicResultView.java
+practice/dto/GradingRunView.java
+practice/dto/PracticeAttemptSummary.java
+practice/dto/package-info.java
+practice/package-info.java
+progress/package-info.java
+simulation/package-info.java
+=== 2. PHỤ THUỘC GIỮA MODULE (import) ===
+   3 practice -> common
+   3 assessment -> common
+   2 integration -> common
+   1 identity -> common
+   1 examination -> common
+   1 curriculum -> common
+   1 administration -> common
+=== 3. EVENT (publish / listen) ===
+integration/dto/OutboxEventView.java:14:public record OutboxEventView(
+administration/dto/AuditEventView.java:12:public record AuditEventView(
+=== 4. KHAI BÁO MODULE ===
+identity/package-info.java:4: * <p>{@code allowedDependencies} bắt đầu ở mức tối thiểu: chỉ hạ tầng dùng
+identity/package-info.java-5- * chung. Cần gọi module khác thì phải khai báo tường minh ở đây — mỗi lần
+identity/package-info.java-6- * thêm một tên vào danh sách là một quyết định kiến trúc hiện rõ trong diff,
+identity/package-info.java-7- * không phải một import lặng lẽ.
+--
+identity/package-info.java:13:        allowedDependencies = {"common", "platform"},
+identity/package-info.java-14-        displayName = "Identity")
+identity/package-info.java-15-package vn.nitrogen.identity;
+--
+progress/package-info.java:4: * <p>{@code allowedDependencies} bắt đầu ở mức tối thiểu: chỉ hạ tầng dùng
+progress/package-info.java-5- * chung. Cần gọi module khác thì phải khai báo tường minh ở đây — mỗi lần
+progress/package-info.java-6- * thêm một tên vào danh sách là một quyết định kiến trúc hiện rõ trong diff,
+progress/package-info.java-7- * không phải một import lặng lẽ.
+--
+progress/package-info.java:13:        allowedDependencies = {"common", "platform"},
+progress/package-info.java-14-        displayName = "Progress")
+progress/package-info.java-15-package vn.nitrogen.progress;
+--
+curriculum/package-info.java:4: * <p>{@code allowedDependencies} bắt đầu ở mức tối thiểu: chỉ hạ tầng dùng
+curriculum/package-info.java-5- * chung. Cần gọi module khác thì phải khai báo tường minh ở đây — mỗi lần
+curriculum/package-info.java-6- * thêm một tên vào danh sách là một quyết định kiến trúc hiện rõ trong diff,
+curriculum/package-info.java-7- * không phải một import lặng lẽ.
+--
+curriculum/package-info.java:13:        allowedDependencies = {"common", "platform"},
+curriculum/package-info.java-14-        displayName = "Curriculum")
+curriculum/package-info.java-15-package vn.nitrogen.curriculum;
+--
+integration/package-info.java:4: * <p>{@code allowedDependencies} bắt đầu ở mức tối thiểu: chỉ hạ tầng dùng
+integration/package-info.java-5- * chung. Cần gọi module khác thì phải khai báo tường minh ở đây — mỗi lần
+integration/package-info.java-6- * thêm một tên vào danh sách là một quyết định kiến trúc hiện rõ trong diff,
+integration/package-info.java-7- * không phải một import lặng lẽ.
+--
+integration/package-info.java:13:        allowedDependencies = {"common", "platform"},
+integration/package-info.java-14-        displayName = "Integration")
+integration/package-info.java-15-package vn.nitrogen.integration;
+--
+chemistry/package-info.java:4: * <p>{@code allowedDependencies} bắt đầu ở mức tối thiểu: chỉ hạ tầng dùng
+chemistry/package-info.java-5- * chung. Cần gọi module khác thì phải khai báo tường minh ở đây — mỗi lần
+chemistry/package-info.java-6- * thêm một tên vào danh sách là một quyết định kiến trúc hiện rõ trong diff,
+chemistry/package-info.java-7- * không phải một import lặng lẽ.
+--
+chemistry/package-info.java:13:        allowedDependencies = {"common", "platform"},
+chemistry/package-info.java-14-        displayName = "Chemistry")
+chemistry/package-info.java-15-package vn.nitrogen.chemistry;
+--
+flashcard/package-info.java:4: * <p>{@code allowedDependencies} bắt đầu ở mức tối thiểu: chỉ hạ tầng dùng
+flashcard/package-info.java-5- * chung. Cần gọi module khác thì phải khai báo tường minh ở đây — mỗi lần
+flashcard/package-info.java-6- * thêm một tên vào danh sách là một quyết định kiến trúc hiện rõ trong diff,
+flashcard/package-info.java-7- * không phải một import lặng lẽ.
+--
+flashcard/package-info.java:13:        allowedDependencies = {"common", "platform"},
+flashcard/package-info.java-14-        displayName = "Flashcard")
+flashcard/package-info.java-15-package vn.nitrogen.flashcard;
+--
+simulation/package-info.java:4: * <p>{@code allowedDependencies} bắt đầu ở mức tối thiểu: chỉ hạ tầng dùng
+simulation/package-info.java-5- * chung. Cần gọi module khác thì phải khai báo tường minh ở đây — mỗi lần
+simulation/package-info.java-6- * thêm một tên vào danh sách là một quyết định kiến trúc hiện rõ trong diff,
+simulation/package-info.java-7- * không phải một import lặng lẽ.
+--
+simulation/package-info.java:13:        allowedDependencies = {"common", "platform"},
+simulation/package-info.java-14-        displayName = "Simulation")
+simulation/package-info.java-15-package vn.nitrogen.simulation;
+--
+content/package-info.java:4: * <p>{@code allowedDependencies} bắt đầu ở mức tối thiểu: chỉ hạ tầng dùng
+content/package-info.java-5- * chung. Cần gọi module khác thì phải khai báo tường minh ở đây — mỗi lần
+content/package-info.java-6- * thêm một tên vào danh sách là một quyết định kiến trúc hiện rõ trong diff,
+content/package-info.java-7- * không phải một import lặng lẽ.
+--
+content/package-info.java:13:        allowedDependencies = {"common", "platform"},
+content/package-info.java-14-        displayName = "Content")
+content/package-info.java-15-package vn.nitrogen.content;
+--
+assessment/package-info.java:4: * <p>{@code allowedDependencies} bắt đầu ở mức tối thiểu: chỉ hạ tầng dùng
+assessment/package-info.java-5- * chung. Cần gọi module khác thì phải khai báo tường minh ở đây — mỗi lần
+assessment/package-info.java-6- * thêm một tên vào danh sách là một quyết định kiến trúc hiện rõ trong diff,
+assessment/package-info.java-7- * không phải một import lặng lẽ.
+--
+assessment/package-info.java:13:        allowedDependencies = {"common", "platform"},
+assessment/package-info.java-14-        displayName = "Assessment")
+assessment/package-info.java-15-package vn.nitrogen.assessment;
+--
+examination/package-info.java:4: * <p>{@code allowedDependencies} bắt đầu ở mức tối thiểu: chỉ hạ tầng dùng
+examination/package-info.java-5- * chung. Cần gọi module khác thì phải khai báo tường minh ở đây — mỗi lần
+examination/package-info.java-6- * thêm một tên vào danh sách là một quyết định kiến trúc hiện rõ trong diff,
+examination/package-info.java-7- * không phải một import lặng lẽ.
+--
+examination/package-info.java:13:        allowedDependencies = {"common", "platform"},
+examination/package-info.java-14-        displayName = "Examination")
+examination/package-info.java-15-package vn.nitrogen.examination;
+--
+administration/package-info.java:4: * <p>{@code allowedDependencies} bắt đầu ở mức tối thiểu: chỉ hạ tầng dùng
+administration/package-info.java-5- * chung. Cần gọi module khác thì phải khai báo tường minh ở đây — mỗi lần
+administration/package-info.java-6- * thêm một tên vào danh sách là một quyết định kiến trúc hiện rõ trong diff,
+administration/package-info.java-7- * không phải một import lặng lẽ.
+--
+administration/package-info.java:13:        allowedDependencies = {"common", "platform"},
+administration/package-info.java-14-        displayName = "Administration")
+administration/package-info.java-15-package vn.nitrogen.administration;
+--
+practice/package-info.java:4: * <p>{@code allowedDependencies} bắt đầu ở mức tối thiểu: chỉ hạ tầng dùng
+practice/package-info.java-5- * chung. Cần gọi module khác thì phải khai báo tường minh ở đây — mỗi lần
+practice/package-info.java-6- * thêm một tên vào danh sách là một quyết định kiến trúc hiện rõ trong diff,
+practice/package-info.java-7- * không phải một import lặng lẽ.
+--
+practice/package-info.java:13:        allowedDependencies = {"common", "platform"},
+practice/package-info.java-14-        displayName = "Practice")
+practice/package-info.java-15-package vn.nitrogen.practice;
