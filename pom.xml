@@ -22,6 +22,8 @@
 		<json-schema-validator.version>1.5.8</json-schema-validator.version>
 		<rabbit-amqp-client.version>5.34.0</rabbit-amqp-client.version>
 		<tomcat.version>11.0.25</tomcat.version>
+		<jackson-2-bom.version>2.21.7</jackson-2-bom.version>
+		<jackson-bom.version>3.1.7</jackson-bom.version>
 		<maven-enforcer-plugin.version>3.6.2</maven-enforcer-plugin.version>
 		<spotless-maven-plugin.version>2.44.5</spotless-maven-plugin.version>
 		<spotbugs-maven-plugin.version>4.9.3.0</spotbugs-maven-plugin.version>
