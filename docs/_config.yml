@@ -1,0 +1,8 @@
+title: Nitrogen Design Docs
+description: Architecture, design decisions, and implementation notes for Nitrogen backend.
+baseurl: "/nitrogen-backend"
+url: "https://nitrogen-nit.github.io"
+markdown: kramdown
+
+exclude:
+  - README.md

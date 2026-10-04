@@ -3,7 +3,6 @@ package vn.nitrogen.identity.api;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
@@ -30,14 +29,14 @@ public class IdentityQueryApi implements ModuleApi {
     }
 
     public Optional<UserSummary> findById(UUID userId) {
-        return users.findById(userId)
+        return users.findWithRolesById(userId)
                 .filter(User::isActive)
                 .map(IdentityQueryApi::toSummary);
     }
 
     /** Tra hàng loạt trong một query — tránh N+1 khi render danh sách attempt. */
     public List<UserSummary> findAllById(Collection<UUID> userIds) {
-        return users.findAllByIdIn(userIds).stream()
+        return users.findAllWithRolesByIdIn(userIds).stream()
                 .filter(User::isActive)
                 .map(IdentityQueryApi::toSummary)
                 .toList();
@@ -48,6 +47,11 @@ public class IdentityQueryApi implements ModuleApi {
     }
 
     private static UserSummary toSummary(User user) {
-        return new UserSummary(user.getId(), user.getDisplayName(), Set.of(), user.isActive());
+        return new UserSummary(
+                user.getId(),
+                user.getDisplayName(),
+                user.getRoles(),
+                user.getTimezone(),
+                user.isActive());
     }
 }
