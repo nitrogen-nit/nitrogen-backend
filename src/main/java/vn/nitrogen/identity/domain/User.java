@@ -1,12 +1,21 @@
 package vn.nitrogen.identity.domain;
 
-import jakarta.persistence.*;
-
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
-
 import vn.nitrogen.common.domain.AbstractIdentifiableEntity;
 
 @Entity
@@ -47,58 +56,6 @@ public class User extends AbstractIdentifiableEntity {
 
     @Column(name = "last_login_at")
     private Instant lastLoginAt;
-
-    public String getPasswordHash() {
-        return passwordHash;
-    }
-
-    public void setPasswordHash(String passwordHash) {
-        this.passwordHash = passwordHash;
-    }
-
-    public boolean isEmailVerified() {
-        return emailVerified;
-    }
-
-    public void setEmailVerified(boolean emailVerified) {
-        this.emailVerified = emailVerified;
-    }
-
-    public Instant getEmailVerifiedAt() {
-        return emailVerifiedAt;
-    }
-
-    public void setEmailVerifiedAt(Instant emailVerifiedAt) {
-        this.emailVerifiedAt = emailVerifiedAt;
-    }
-
-    public String getTimezone() {
-        return timezone;
-    }
-
-    public void setTimezone(String timezone) {
-        this.timezone = timezone;
-    }
-
-    public Instant getLastLoginAt() {
-        return lastLoginAt;
-    }
-
-    public void setLastLoginAt(Instant lastLoginAt) {
-        this.lastLoginAt = lastLoginAt;
-    }
-
-    public Set<String> getRoles() {
-        return Set.copyOf(roles);
-    }
-
-    public void setRoles(Set<String> roles) {
-        this.roles = roles;
-    }
-
-    public void addRole(String role) {
-        roles.add(role);
-    }
 
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(
@@ -146,12 +103,60 @@ public class User extends AbstractIdentifiableEntity {
         return rowVersion;
     }
 
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
+    public boolean isEmailVerified() {
+        return emailVerified;
+    }
+
+    public Instant getEmailVerifiedAt() {
+        return emailVerifiedAt;
+    }
+
+    public String getTimezone() {
+        return timezone;
+    }
+
+    public void setTimezone(String timezone) {
+        this.timezone = timezone;
+    }
+
+    public Instant getLastLoginAt() {
+        return lastLoginAt;
+    }
+
+    /** Bản sao bất biến — gọi {@link #addRole} để thêm role, đừng sửa set trả về. */
+    public Set<String> getRoles() {
+        return Set.copyOf(roles);
+    }
+
+    public void addRole(String role) {
+        roles.add(role);
+    }
+
     public boolean isActive() {
         return status == UserStatus.ACTIVE;
     }
 
     public void disable() {
         status = UserStatus.DISABLED;
+    }
+
+    /** Đặt lại mật khẩu đã băm. Băm là việc của tầng service, không phải domain. */
+    public void changePassword(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
+    /** Đánh dấu email đã xác thực; cờ và mốc thời gian luôn đi cùng nhau. */
+    public void verifyEmail(Instant verifiedAt) {
+        this.emailVerified = true;
+        this.emailVerifiedAt = verifiedAt;
+    }
+
+    public void recordLogin(Instant loginAt) {
+        this.lastLoginAt = loginAt;
     }
 
     @PrePersist
