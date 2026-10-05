@@ -6,8 +6,9 @@ import java.util.UUID;
 /**
  * Một dòng audit log.
  *
- * @param actorId    người thực hiện, null nếu là hệ thống
- * @param targetType loại đối tượng bị tác động, ví dụ {@code PRACTICE_ATTEMPT}
+ * @param actorId       người thực hiện, null nếu là hệ thống
+ * @param targetType    loại đối tượng bị tác động, ví dụ {@code PRACTICE_ATTEMPT}
+ * @param correlationId id trace request sinh ra audit log
  */
 public record AuditEventView(
         UUID id,
@@ -16,5 +17,6 @@ public record AuditEventView(
         String targetType,
         UUID targetId,
         Instant occurredAt,
-        String reason) {
+        String reason,
+        String correlationId) {
 }
