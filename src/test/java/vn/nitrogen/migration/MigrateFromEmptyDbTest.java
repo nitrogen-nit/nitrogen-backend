@@ -56,6 +56,37 @@ class MigrateFromEmptyDbTest extends TestcontainersBase {
     }
 
     @Test
+    void createsAdministrationAuditLogTable() throws Exception {
+        assertThat(tableNames("administration")).contains("audit_logs");
+    }
+
+    @Test
+    void createsAdministrationAuditLogIndexes() throws Exception {
+        assertThat(query("""
+                SELECT indexname
+                FROM pg_indexes
+                WHERE schemaname = 'administration'
+                  AND tablename = 'audit_logs'
+                """)).contains(
+                "ix_audit_logs_target",
+                "ix_audit_logs_actor_time",
+                "ix_audit_logs_correlation_id");
+    }
+
+    @Test
+    void createsAdministrationAuditLogConstraints() throws Exception {
+        assertThat(query("""
+                SELECT conname
+                FROM pg_constraint
+                WHERE conrelid = 'administration.audit_logs'::regclass
+                """)).contains(
+                "audit_logs_pkey",
+                "chk_audit_action_not_blank",
+                "chk_audit_target_type_not_blank",
+                "chk_audit_correlation_id_not_blank");
+    }
+
+    @Test
     void appliesFlywayMigrationsOnceAndInOrder() throws Exception {
         List<String> versions = query("""
                 SELECT version
