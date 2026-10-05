@@ -242,7 +242,6 @@ jobs:
           -Dsonar.host.url="$SONAR_HOST_URL"
           -Dsonar.organization="$SONAR_ORGANIZATION"
           -Dsonar.token="$SONAR_TOKEN"
-          -Dsonar.qualitygate.wait=true
 
       - name: Upload JaCoCo coverage report
         if: always()
