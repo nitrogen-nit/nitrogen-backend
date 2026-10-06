@@ -217,6 +217,39 @@ class MigrateFromEmptyDbTest extends TestcontainersBase {
                 "chk_reset_token_version");
     }
 
+    @Test
+    void createsAdministrationSecurityEventTable() throws Exception {
+        assertThat(tableNames("administration")).contains("security_events");
+    }
+
+    @Test
+    void createsAdministrationSecurityEventIndexes() throws Exception {
+        assertThat(query("""
+            SELECT indexname
+            FROM pg_indexes
+            WHERE schemaname = 'administration'
+              AND tablename = 'security_events'
+            """)).contains(
+                "ix_security_events_actor_time",
+                "ix_security_events_type_time",
+                "ix_security_events_correlation_id",
+                "ix_security_events_ip_time");
+    }
+
+    @Test
+    void createsAdministrationSecurityEventConstraints() throws Exception {
+        assertThat(query("""
+            SELECT conname
+            FROM pg_constraint
+            WHERE conrelid = 'administration.security_events'::regclass
+            """)).contains(
+                "security_events_pkey",
+                "chk_security_event_type",
+                "chk_security_event_severity",
+                "chk_security_event_outcome",
+                "chk_security_event_correlation_id_not_blank");
+    }
+
     private List<String> schemaNames() throws Exception {
         return query("SELECT schema_name FROM information_schema.schemata");
     }
