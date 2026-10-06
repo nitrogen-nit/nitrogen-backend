@@ -3,7 +3,7 @@ package vn.nitrogen.platform.messaging;
 import java.time.Instant;
 import java.util.UUID;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 
 /**
  * Envelope chuẩn cho mọi message qua RabbitMQ (§17.3).

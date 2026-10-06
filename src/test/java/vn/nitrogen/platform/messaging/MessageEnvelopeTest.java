@@ -2,19 +2,22 @@ package vn.nitrogen.platform.messaging;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.slf4j.MDC;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageProperties;
+import org.springframework.amqp.support.converter.MessageConverter;
+import tools.jackson.databind.json.JsonMapper;
 import vn.nitrogen.platform.observability.CorrelationId;
 
 @Tag("unit")
 class MessageEnvelopeTest {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final JsonMapper MAPPER = JsonMapper.builder().build();
 
     @AfterEach
     void clearMdc() {
@@ -69,5 +72,25 @@ class MessageEnvelopeTest {
                 MAPPER.readTree("{\"attemptId\":\"" + aggregateId + "\"}"));
 
         assertThat(envelope.correlationId()).isEqualTo(correlationId);
+    }
+
+    @Test
+    void roundTripsThroughRabbitJsonMessageConverter() throws Exception {
+        UUID aggregateId = UUID.randomUUID();
+        MessageEnvelope envelope = new MessageEnvelope(
+                UUID.randomUUID(),
+                "AttemptSubmitted",
+                1,
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                "PRACTICE_ATTEMPT",
+                aggregateId,
+                Instant.parse("2026-10-07T00:00:00Z"),
+                MAPPER.readTree("{\"attemptId\":\"" + aggregateId + "\"}"));
+        MessageConverter converter = new RabbitConfig().jsonMessageConverter();
+
+        Message message = converter.toMessage(envelope, new MessageProperties());
+
+        assertThat(converter.fromMessage(message)).isEqualTo(envelope);
     }
 }
