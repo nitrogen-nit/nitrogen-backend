@@ -206,6 +206,12 @@ jobs:
 
   backend-sonar:
     name: backend-sonar
+    # Org SonarCloud chỉ được đọc dữ liệu của main branch và của pull request.
+    # Push vào một long-lived branch khác (dev) sẽ kích hoạt branch analysis,
+    # và bước chờ quality gate chết với "Organization is not allowed to access
+    # data from non main branches" — dù bản thân phân tích đã upload xong.
+    # PR vào dev vẫn được quét, nên push vào dev chỉ là merge của PR đã qua gate.
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     needs:
       - backend-format
