@@ -250,6 +250,63 @@ class MigrateFromEmptyDbTest extends TestcontainersBase {
                 "chk_security_event_correlation_id_not_blank");
     }
 
+    @Test
+    void expandsOutboxWithEnvelopeMetadata() throws Exception {
+        assertThat(query("""
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_schema = 'integration'
+              AND table_name = 'outbox_events'
+            """))
+                .contains(
+                        "routing_key",
+                        "correlation_id",
+                        "causation_id");
+    }
+
+    @Test
+    void requiresOutboxRoutingAndCorrelationMetadata() throws Exception {
+        assertThat(query("""
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_schema = 'integration'
+              AND table_name = 'outbox_events'
+              AND is_nullable = 'NO'
+            """))
+                .contains(
+                        "routing_key",
+                        "correlation_id");
+    }
+
+    @Test
+    void createsOutboxEnvelopeConstraints() throws Exception {
+        assertThat(query("""
+            SELECT conname
+            FROM pg_constraint
+            WHERE conrelid = 'integration.outbox_events'::regclass
+            """))
+                .contains(
+                        "chk_outbox_version",
+                        "chk_outbox_retry",
+                        "chk_outbox_payload",
+                        "chk_outbox_status",
+                        "chk_outbox_routing_key_not_blank");
+    }
+
+    @Test
+    void createsOutboxIndexes() throws Exception {
+        assertThat(query("""
+            SELECT indexname
+            FROM pg_indexes
+            WHERE schemaname = 'integration'
+              AND tablename = 'outbox_events'
+            """))
+                .contains(
+                        "outbox_events_pkey",
+                        "idx_outbox_publishable",
+                        "ix_outbox_correlation_id");
+    }
+
     private List<String> schemaNames() throws Exception {
         return query("SELECT schema_name FROM information_schema.schemata");
     }
