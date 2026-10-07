@@ -3,6 +3,8 @@ package vn.nitrogen.integration.api;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -20,6 +22,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import vn.nitrogen.integration.domain.OutboxEvent;
 import vn.nitrogen.integration.domain.OutboxStatus;
 import vn.nitrogen.integration.dto.AppendOutboxCommand;
+import vn.nitrogen.integration.dto.ClaimedOutboxEvent;
 import vn.nitrogen.integration.dto.OutboxEventView;
 import vn.nitrogen.integration.repository.OutboxEventRepository;
 import vn.nitrogen.support.TestcontainersBase;
@@ -121,6 +124,87 @@ class OutboxApiTest extends TestcontainersBase {
                 .singleElement()
                 .extracting(OutboxEventView::id)
                 .isEqualTo(failedId);
+    }
+
+    @Test
+    void differentWorkersDoNotClaimTheSameEvent() {
+        UUID firstId = appendInTransaction();
+        UUID secondId = appendInTransaction();
+        Instant now = Instant.now().plusSeconds(1);
+
+        List<ClaimedOutboxEvent> firstClaim =
+                outbox.claimPending("worker-a", now, Duration.ofMinutes(1), 1);
+        List<ClaimedOutboxEvent> secondClaim =
+                outbox.claimPending("worker-b", now, Duration.ofMinutes(1), 10);
+
+        assertThat(firstClaim).hasSize(1);
+        assertThat(secondClaim).hasSize(1);
+        assertThat(firstClaim.getFirst().id()).isIn(firstId, secondId);
+        assertThat(secondClaim.getFirst().id()).isIn(firstId, secondId);
+        assertThat(secondClaim.getFirst().id()).isNotEqualTo(firstClaim.getFirst().id());
+    }
+
+    @Test
+    void expiredLeaseCanBeReclaimed() {
+        UUID eventId = appendInTransaction();
+        Instant firstClaimTime = Instant.now().plusSeconds(1);
+
+        assertThat(outbox.claimPending("dead-worker", firstClaimTime, Duration.ofSeconds(5), 1))
+                .extracting(ClaimedOutboxEvent::id)
+                .containsExactly(eventId);
+
+        assertThat(outbox.claimPending(
+                        "replacement-worker",
+                        firstClaimTime.plusSeconds(6),
+                        Duration.ofSeconds(5),
+                        1))
+                .extracting(ClaimedOutboxEvent::id)
+                .containsExactly(eventId);
+    }
+
+    @Test
+    void onlyLeaseOwnerCanMarkEventPublished() {
+        UUID eventId = appendInTransaction();
+        Instant now = Instant.now().plusSeconds(1);
+        outbox.claimPending("owner", now, Duration.ofMinutes(1), 1);
+
+        assertThatThrownBy(() -> outbox.markPublished(eventId, "other-worker", now))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining(eventId.toString());
+
+        outbox.markPublished(eventId, "owner", now);
+        OutboxEvent event = outboxEvents.findById(eventId).orElseThrow();
+        assertThat(event.getStatus()).isEqualTo(OutboxStatus.PUBLISHED);
+        assertThat(event.getPublishedAt()).isEqualTo(now);
+        assertThat(event.getLockedBy()).isNull();
+        assertThat(event.getLockedUntil()).isNull();
+    }
+
+    @Test
+    void ownerCanRescheduleAndEventuallyMarkEventFailed() {
+        UUID eventId = appendInTransaction();
+        Instant now = Instant.now().plusSeconds(1);
+        outbox.claimPending("worker", now, Duration.ofMinutes(1), 1);
+
+        Instant nextRetry = now.plusSeconds(10);
+        outbox.reschedule(eventId, "worker", 1, nextRetry, "BROKER_DOWN", "connection refused");
+
+        OutboxEvent rescheduled = outboxEvents.findById(eventId).orElseThrow();
+        assertThat(rescheduled.getStatus()).isEqualTo(OutboxStatus.PENDING);
+        assertThat(rescheduled.getRetryCount()).isEqualTo(1);
+        assertThat(rescheduled.getNextRetryAt()).isEqualTo(nextRetry);
+        assertThat(rescheduled.getLastErrorCode()).isEqualTo("BROKER_DOWN");
+        assertThat(rescheduled.getLockedBy()).isNull();
+
+        outbox.claimPending("worker", nextRetry.plusSeconds(1), Duration.ofMinutes(1), 1);
+        Instant failedAt = nextRetry.plusSeconds(2);
+        outbox.markFailed(eventId, "worker", 2, failedAt, "BROKER_DOWN", "still unavailable");
+
+        OutboxEvent failed = outboxEvents.findById(eventId).orElseThrow();
+        assertThat(failed.getStatus()).isEqualTo(OutboxStatus.FAILED);
+        assertThat(failed.getRetryCount()).isEqualTo(2);
+        assertThat(failed.getFailedAt()).isEqualTo(failedAt);
+        assertThat(failed.getLockedBy()).isNull();
     }
 
     private UUID appendInTransaction() {
