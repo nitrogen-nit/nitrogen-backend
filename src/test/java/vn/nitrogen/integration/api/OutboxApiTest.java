@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -175,7 +176,7 @@ class OutboxApiTest extends TestcontainersBase {
         outbox.markPublished(eventId, "owner", now);
         OutboxEvent event = outboxEvents.findById(eventId).orElseThrow();
         assertThat(event.getStatus()).isEqualTo(OutboxStatus.PUBLISHED);
-        assertThat(event.getPublishedAt()).isEqualTo(now);
+        assertThat(event.getPublishedAt()).isEqualTo(databaseTimestamp(now));
         assertThat(event.getLockedBy()).isNull();
         assertThat(event.getLockedUntil()).isNull();
     }
@@ -192,7 +193,7 @@ class OutboxApiTest extends TestcontainersBase {
         OutboxEvent rescheduled = outboxEvents.findById(eventId).orElseThrow();
         assertThat(rescheduled.getStatus()).isEqualTo(OutboxStatus.PENDING);
         assertThat(rescheduled.getRetryCount()).isEqualTo(1);
-        assertThat(rescheduled.getNextRetryAt()).isEqualTo(nextRetry);
+        assertThat(rescheduled.getNextRetryAt()).isEqualTo(databaseTimestamp(nextRetry));
         assertThat(rescheduled.getLastErrorCode()).isEqualTo("BROKER_DOWN");
         assertThat(rescheduled.getLockedBy()).isNull();
 
@@ -203,7 +204,7 @@ class OutboxApiTest extends TestcontainersBase {
         OutboxEvent failed = outboxEvents.findById(eventId).orElseThrow();
         assertThat(failed.getStatus()).isEqualTo(OutboxStatus.FAILED);
         assertThat(failed.getRetryCount()).isEqualTo(2);
-        assertThat(failed.getFailedAt()).isEqualTo(failedAt);
+        assertThat(failed.getFailedAt()).isEqualTo(databaseTimestamp(failedAt));
         assertThat(failed.getLockedBy()).isNull();
     }
 
@@ -227,6 +228,10 @@ class OutboxApiTest extends TestcontainersBase {
 
     private TransactionTemplate transactionTemplate() {
         return new TransactionTemplate(transactionManager);
+    }
+
+    private static Instant databaseTimestamp(Instant instant) {
+        return instant.truncatedTo(ChronoUnit.MICROS);
     }
 
     private static AppendOutboxCommand command() {
