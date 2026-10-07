@@ -131,7 +131,7 @@ class OutboxApiTest extends TestcontainersBase {
     void differentWorkersDoNotClaimTheSameEvent() {
         UUID firstId = appendInTransaction();
         UUID secondId = appendInTransaction();
-        Instant now = Instant.now().plusSeconds(1);
+        Instant now = databaseNow().plusSeconds(1);
 
         List<ClaimedOutboxEvent> firstClaim =
                 outbox.claimPending("worker-a", now, Duration.ofMinutes(1), 1);
@@ -148,7 +148,7 @@ class OutboxApiTest extends TestcontainersBase {
     @Test
     void expiredLeaseCanBeReclaimed() {
         UUID eventId = appendInTransaction();
-        Instant firstClaimTime = Instant.now().plusSeconds(1);
+        Instant firstClaimTime = databaseNow().plusSeconds(1);
 
         assertThat(outbox.claimPending("dead-worker", firstClaimTime, Duration.ofSeconds(5), 1))
                 .extracting(ClaimedOutboxEvent::id)
@@ -166,7 +166,7 @@ class OutboxApiTest extends TestcontainersBase {
     @Test
     void onlyLeaseOwnerCanMarkEventPublished() {
         UUID eventId = appendInTransaction();
-        Instant now = Instant.now().plusSeconds(1);
+        Instant now = databaseNow().plusSeconds(1);
         outbox.claimPending("owner", now, Duration.ofMinutes(1), 1);
 
         assertThatThrownBy(() -> outbox.markPublished(eventId, "other-worker", now))
@@ -176,7 +176,7 @@ class OutboxApiTest extends TestcontainersBase {
         outbox.markPublished(eventId, "owner", now);
         OutboxEvent event = outboxEvents.findById(eventId).orElseThrow();
         assertThat(event.getStatus()).isEqualTo(OutboxStatus.PUBLISHED);
-        assertThat(event.getPublishedAt()).isEqualTo(databaseTimestamp(now));
+        assertThat(event.getPublishedAt()).isEqualTo(now);
         assertThat(event.getLockedBy()).isNull();
         assertThat(event.getLockedUntil()).isNull();
     }
@@ -184,7 +184,7 @@ class OutboxApiTest extends TestcontainersBase {
     @Test
     void ownerCanRescheduleAndEventuallyMarkEventFailed() {
         UUID eventId = appendInTransaction();
-        Instant now = Instant.now().plusSeconds(1);
+        Instant now = databaseNow().plusSeconds(1);
         outbox.claimPending("worker", now, Duration.ofMinutes(1), 1);
 
         Instant nextRetry = now.plusSeconds(10);
@@ -193,7 +193,7 @@ class OutboxApiTest extends TestcontainersBase {
         OutboxEvent rescheduled = outboxEvents.findById(eventId).orElseThrow();
         assertThat(rescheduled.getStatus()).isEqualTo(OutboxStatus.PENDING);
         assertThat(rescheduled.getRetryCount()).isEqualTo(1);
-        assertThat(rescheduled.getNextRetryAt()).isEqualTo(databaseTimestamp(nextRetry));
+        assertThat(rescheduled.getNextRetryAt()).isEqualTo(nextRetry);
         assertThat(rescheduled.getLastErrorCode()).isEqualTo("BROKER_DOWN");
         assertThat(rescheduled.getLockedBy()).isNull();
 
@@ -204,7 +204,7 @@ class OutboxApiTest extends TestcontainersBase {
         OutboxEvent failed = outboxEvents.findById(eventId).orElseThrow();
         assertThat(failed.getStatus()).isEqualTo(OutboxStatus.FAILED);
         assertThat(failed.getRetryCount()).isEqualTo(2);
-        assertThat(failed.getFailedAt()).isEqualTo(databaseTimestamp(failedAt));
+        assertThat(failed.getFailedAt()).isEqualTo(failedAt);
         assertThat(failed.getLockedBy()).isNull();
     }
 
@@ -230,8 +230,9 @@ class OutboxApiTest extends TestcontainersBase {
         return new TransactionTemplate(transactionManager);
     }
 
-    private static Instant databaseTimestamp(Instant instant) {
-        return instant.truncatedTo(ChronoUnit.MICROS);
+    // PostgreSQL stores microseconds and pgjdbc rounds extra nanos, so tests start at that precision.
+    private static Instant databaseNow() {
+        return Instant.now().truncatedTo(ChronoUnit.MICROS);
     }
 
     private static AppendOutboxCommand command() {
