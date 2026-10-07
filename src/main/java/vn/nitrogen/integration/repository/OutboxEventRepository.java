@@ -8,7 +8,7 @@ import vn.nitrogen.integration.domain.OutboxEvent;
 import vn.nitrogen.integration.domain.OutboxStatus;
 
 public interface OutboxEventRepository
-        extends JpaRepository<OutboxEvent, UUID> {
+        extends JpaRepository<OutboxEvent, UUID>, OutboxClaimRepository {
 
     List<OutboxEvent> findByStatusOrderByOccurredAtDescIdDesc(
             OutboxStatus status,
