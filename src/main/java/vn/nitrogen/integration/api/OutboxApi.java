@@ -1,5 +1,7 @@
 package vn.nitrogen.integration.api;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.context.annotation.Lazy;
@@ -8,6 +10,7 @@ import org.springframework.stereotype.Controller;
 import vn.nitrogen.common.api.ModuleApi;
 import vn.nitrogen.integration.domain.OutboxEvent;
 import vn.nitrogen.integration.dto.AppendOutboxCommand;
+import vn.nitrogen.integration.dto.ClaimedOutboxEvent;
 import vn.nitrogen.integration.dto.OutboxEventView;
 import vn.nitrogen.integration.service.OutboxService;
 
@@ -39,6 +42,38 @@ public class OutboxApi implements ModuleApi {
                 .stream()
                 .map(this::toView)
                 .toList();
+    }
+
+    public List<ClaimedOutboxEvent> claimPending(
+            String workerId,
+            Instant now,
+            Duration leaseDuration,
+            int batchSize) {
+        return outbox.claimPending(workerId, now, leaseDuration, batchSize);
+    }
+
+    public void markPublished(UUID eventId, String workerId, Instant publishedAt) {
+        outbox.markPublished(eventId, workerId, publishedAt);
+    }
+
+    public void reschedule(
+            UUID eventId,
+            String workerId,
+            int retryCount,
+            Instant nextRetryAt,
+            String errorCode,
+            String error) {
+        outbox.reschedule(eventId, workerId, retryCount, nextRetryAt, errorCode, error);
+    }
+
+    public void markFailed(
+            UUID eventId,
+            String workerId,
+            int retryCount,
+            Instant failedAt,
+            String errorCode,
+            String error) {
+        outbox.markFailed(eventId, workerId, retryCount, failedAt, errorCode, error);
     }
 
     private OutboxEventView toView(OutboxEvent event) {

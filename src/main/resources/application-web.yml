@@ -14,5 +14,11 @@ nitrogen:
     scheme: ${NITROGEN_WEB_SCHEME:http}
     host: ${NITROGEN_WEB_HOST:localhost}
   outbox:
-    # Chu kỳ quét outbox. Chỉ web replica chạy publisher.
-    publish-interval: PT5S
+    # Mỗi replica claim một batch bằng lease trước khi gọi RabbitMQ.
+    publish-interval: ${NITROGEN_OUTBOX_PUBLISH_INTERVAL:PT5S}
+    batch-size: ${NITROGEN_OUTBOX_BATCH_SIZE:100}
+    lease-duration: ${NITROGEN_OUTBOX_LEASE_DURATION:PT30S}
+    confirm-timeout: ${NITROGEN_OUTBOX_CONFIRM_TIMEOUT:PT10S}
+    max-retries: ${NITROGEN_OUTBOX_MAX_RETRIES:8}
+    retry-base-delay: ${NITROGEN_OUTBOX_RETRY_BASE_DELAY:PT5S}
+    retry-max-delay: ${NITROGEN_OUTBOX_RETRY_MAX_DELAY:PT15M}
