@@ -41,6 +41,12 @@ public class SecurityConfig {
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 
+    /*
+     * java:S4502 — CSRF chỉ bị bỏ cho PUBLIC_AUTH_ENDPOINTS: request anonymous,
+     * API stateless, không có session/cookie xác thực nào để trình duyệt tự gửi
+     * kèm, nên không có gì để giả mạo. Mọi endpoint khác vẫn giữ CSRF mặc định.
+     */
+    @SuppressWarnings("java:S4502")
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
