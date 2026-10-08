@@ -16,7 +16,7 @@ flowchart LR
         S --> O[(integration.outbox_events<br/>PENDING)]
     end
     O --> P[OutboxPublisher<br/>profile web]
-    P -->|publisher confirm| X{{nitrogen.events.v1<br/>topic exchange}}
+    P -->|publisher confirm| X[["nitrogen.events.v1<br/>topic exchange"]]
     X --> Q[Queue của consumer]
     Q --> C[RabbitIdempotentConsumer<br/>profile worker]
     C --> PM[(integration.processed_messages)]
