@@ -19,7 +19,7 @@ only `api`, `dto` and, when it exists, `events`.
 | `flashcard` | `flashcard` | Schema reserved; no runtime table yet |
 | `simulation` | `simulation` | Schema reserved; no runtime table yet |
 | `integration` | `integration` | `outbox_events`, `processed_messages` |
-| `administration` | `administration` | Schema reserved; no runtime table yet |
+| `administration` | `administration` | `audit_logs`, `security_events` |
 
 ## Migration ownership
 
@@ -36,3 +36,17 @@ Currently approved cross-schema reference:
 | `practice` | `identity` | `practice.practice_attempts.user_id` references `identity.users(id)` for database integrity |
 
 Database foreign keys across schemas are allowed; JPA object associations across modules are not.
+
+The approved list lives in `FlywayMigrationOwnershipTest.APPROVED_CROSS_SCHEMA_REFERENCES`.
+
+## Module dependencies
+
+Declared in each module's `package-info.java` (`@ApplicationModule(allowedDependencies = ...)`):
+
+| Module | Allowed dependencies |
+|---|---|
+| `identity` | `common`, `platform`, `administration::api`, `administration::dto`, `integration::api`, `integration::dto` |
+| `practice` | `common`, `platform`, `identity::api` |
+| Every other business module | `common`, `platform` |
+
+`common` and `platform` are open modules: shared kernel and technical infrastructure (security, messaging, outbox publisher, observability, scheduling).

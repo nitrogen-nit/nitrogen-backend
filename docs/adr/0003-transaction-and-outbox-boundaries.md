@@ -24,10 +24,12 @@ exception.
 External calls must not happen inside a database transaction. Durable
 publish-after-commit work goes through the integration outbox:
 
-- write domain state and outbox row in one transaction;
+- write domain state and outbox row in one transaction (`OutboxApi.append`, `Propagation.MANDATORY`);
 - commit;
-- publish from the outbox worker/publisher;
-- record retry or processed-message state in integration tables.
+- publish from `OutboxPublisher` (web profile), which claims rows with a lease and calls RabbitMQ outside any transaction;
+- record retry state in `integration.outbox_events` and consumer dedup state in `integration.processed_messages`.
+
+Details: [Messaging, outbox and idempotent consumer](../design/messaging.md).
 
 ## Consequences
 
@@ -48,6 +50,7 @@ two durable event mechanisms in the same backend.
 ## Enforcement
 
 - `TransactionBoundaryTest` blocks class or method `@Transactional` outside `service`.
+- `AbstractModuleServiceTest` requires every `@Service` to declare a transaction boundary.
 - Module repository tests block repository transaction declarations.
 - `NoExternalCallInTransactionTest` blocks HTTP/RabbitMQ/S3/MinIO calls from transactional methods/classes.
 - CI runs these rules through the `backend-architecture-test` job.

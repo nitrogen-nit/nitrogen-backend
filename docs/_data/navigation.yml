@@ -1,0 +1,37 @@
+# Sidebar của trang tài liệu. Thêm trang mới ⇒ thêm một dòng ở đây.
+- title: Tổng quan
+  items:
+    - title: Trang chủ
+      url: /
+- title: Thiết kế
+  items:
+    - title: Identity
+      url: /design/identity.html
+    - title: Audit & security events
+      url: /design/audit-and-security-events.html
+    - title: Messaging & outbox
+      url: /design/messaging.html
+- title: Kiến trúc
+  items:
+    - title: Module ownership
+      url: /architecture/module-ownership.html
+    - title: Coding conventions
+      url: /architecture/coding-conventions.html
+    - title: REST API conventions
+      url: /architecture/rest-api-conventions.html
+    - title: Review checklist
+      url: /architecture/review-checklist.html
+- title: ADR
+  items:
+    - title: 0001 · Modular monolith boundaries
+      url: /adr/0001-modular-monolith-boundaries.html
+    - title: 0002 · Cross-module references
+      url: /adr/0002-cross-module-references.html
+    - title: 0003 · Transaction & outbox boundaries
+      url: /adr/0003-transaction-and-outbox-boundaries.html
+- title: Vận hành
+  items:
+    - title: Environment & secrets
+      url: /environment-and-secrets.html
+    - title: Observability
+      url: /observability.html

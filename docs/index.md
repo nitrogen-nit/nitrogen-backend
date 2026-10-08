@@ -7,9 +7,22 @@ title: Nitrogen Design Docs
 
 Trang này gom tài liệu thiết kế, quyết định kiến trúc và ghi chú triển khai cho backend Nitrogen.
 
+## Trạng thái triển khai
+
+| Phần | Trạng thái |
+|---|---|
+| Identity | Đăng ký email/password và xác minh email qua REST; schema cho role, OAuth account, refresh/reset token (chưa có đăng nhập, refresh, reset password) |
+| Practice | Bắt đầu và tra cứu lượt luyện tập qua REST |
+| Administration | Ghi và tra cứu audit log, security event |
+| Integration / messaging | Transactional outbox, outbox publisher, idempotent consumer, RabbitMQ topology |
+| Curriculum, chemistry, content, assessment, examination, progress, flashcard, simulation | Mới có schema và facade khung (`UnsupportedOperationException`) |
+| Security | Filter chain tối thiểu; chưa có JWT resource server và phân quyền theo role |
+
 ## Thiết Kế Feature
 
 - [Identity schema and token model](design/identity.md)
+- [Audit log and security events](design/audit-and-security-events.md)
+- [Messaging, outbox and idempotent consumer](design/messaging.md)
 
 ## Architecture
 

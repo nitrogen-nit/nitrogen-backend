@@ -7,8 +7,10 @@ contracts. The local observability stack lives in
 
 ## Log Field Contract
 
-Local profile keeps readable console logs. `dev` and `prod` profiles write
-structured JSON logs using Spring Boot structured logging.
+Local profile keeps readable console logs with the correlation ID in the level
+column (`INFO [cid:<id>]`). `dev` and `prod` profiles write structured JSON logs
+(`logstash` format) using Spring Boot structured logging; extra members come
+from `NitrogenStructuredLoggingJsonMembersCustomizer`.
 
 Every structured log must include:
 
@@ -42,6 +44,13 @@ The filter reuses a client correlation ID only when it is at most 128
 characters and matches `[A-Za-z0-9][A-Za-z0-9._:-]*`. Missing or invalid values
 are replaced with a generated UUID. The MDC value is removed in `finally`.
 
+`CorrelationIdFilter` runs first in the filter chain and logs one line per
+request: `HTTP request completed method=... path=... status=... durationMs=...`.
+
+Audit logs and security events store the same correlation ID, so a request can
+be traced from logs to `administration.audit_logs` and
+`administration.security_events`.
+
 RabbitMQ propagation should use the existing `MessageEnvelope.correlationId`.
 `CorrelationId.currentUuidOrNew()` is available for producers that need a UUID
 correlation value from the current HTTP request context.
@@ -53,6 +62,16 @@ Prometheus is exposed at:
 ```text
 /actuator/prometheus
 ```
+
+Exposed actuator endpoints:
+
+| Profile | Endpoints |
+|---|---|
+| default, `local`, `dev` | `health`, `info`, `metrics`, `prometheus`, `modulith` |
+| `prod` | `health`, `info`, `prometheus` |
+
+Security permits anonymous `GET` on `/actuator/health/**`, `/actuator/info` and
+`/actuator/prometheus`; other actuator endpoints require authentication.
 
 Common tags are applied to all meters:
 
@@ -81,11 +100,14 @@ Tracing uses Micrometer Tracing with OpenTelemetry/OTLP. Runtime variables:
 |---|---|---|---|
 | `NITROGEN_TRACING_ENABLED` | `false` | `true` | `true` |
 | `NITROGEN_TRACING_SAMPLING_PROBABILITY` | `0.0` | `1.0` | `0.1` |
-| `NITROGEN_OTLP_ENDPOINT` | `http://localhost:4318/v1/traces` | required env | required env |
+| `NITROGEN_OTLP_ENDPOINT` | `http://localhost:4318/v1/traces` | set to the collector | set to the collector |
 
-The collector URL is never hard-coded in application config. A missing local
-collector must not stop the application unless a future explicit fail-fast
-setting is added.
+`application.yml` falls back to `http://localhost:4318/v1/traces` in every
+profile, so dev and prod must set `NITROGEN_OTLP_ENDPOINT` explicitly when
+tracing is on. A missing collector does not stop the application.
+
+The OpenTelemetry resource carries `service.name`, `service.version` and
+`deployment.environment.name`. OTLP metric export is disabled.
 
 ## Health Groups
 
@@ -98,11 +120,13 @@ Endpoints:
 ```
 
 Liveness includes only `livenessState`. Readiness includes `readinessState` and
-PostgreSQL. RabbitMQ does not block web readiness by default because web
-requests can continue and durable publication is protected by the outbox. Worker
-runtime can enable Rabbit health with `NITROGEN_RABBIT_HEALTH_ENABLED=true`.
+PostgreSQL (`db`). RabbitMQ health is off by default for `web` because web
+requests can continue and durable publication is protected by the outbox.
+`local` turns it on (`NITROGEN_RABBIT_HEALTH_ENABLED` defaults to `true` there),
+and the `worker` profile always turns it on.
 
-Production sets health details to `never` for anonymous users.
+Health details are `when-authorized` by default and in `dev`; `prod` sets them to
+`never`.
 
 ## Local Commands
 
@@ -126,14 +150,22 @@ For IntelliJ runs, use `SPRING_PROFILES_ACTIVE=web,local` and
 `NITROGEN_OTLP_ENDPOINT=http://localhost:4318/v1/traces` when tracing is enabled.
 The application logs the local backend URL after the embedded web server starts.
 
+## CI
+
+The `backend-observability-test` job runs `CorrelationIdFilterTest`,
+`MessageEnvelopeTest`, `ObservabilityEndpointIntegrationTest` and
+`NitrogenApplicationTests`.
+
 ## Troubleshooting
 
 If `/actuator/prometheus` is missing, confirm `micrometer-registry-prometheus`
 is on the classpath and that `management.endpoints.web.exposure.include`
 contains `prometheus`.
 
-If readiness is `DOWN`, check PostgreSQL connectivity first. RabbitMQ should not
-affect web readiness unless `NITROGEN_RABBIT_HEALTH_ENABLED=true`.
+If readiness is `DOWN`, check PostgreSQL connectivity first. RabbitMQ is not
+part of the readiness group, but with Rabbit health enabled (`local`, `worker`,
+or `NITROGEN_RABBIT_HEALTH_ENABLED=true`) a broker outage turns overall
+`/actuator/health` `DOWN`.
 
 If traces are absent, verify `NITROGEN_TRACING_ENABLED=true`, sampling is above
 `0.0`, and the OTLP endpoint points to the collector visible from the process

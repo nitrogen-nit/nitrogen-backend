@@ -7,6 +7,8 @@ title: Identity Schema And Token Model
 
 Tài liệu này mô tả phần nền tảng của module Identity: user, role, OAuth account, refresh token và password reset token.
 
+> **Trạng thái:** đăng ký và xác minh email đã có endpoint (`POST /api/v1/auth/registrations`, `POST /api/v1/auth/email-verifications`). Các luồng refresh token và reset password bên dưới vẫn là **thiết kế**, chưa có endpoint HTTP. Module khác đọc user qua `IdentityQueryApi`, chỉ thấy user `ACTIVE`.
+
 ## UML
 
 ```mermaid
