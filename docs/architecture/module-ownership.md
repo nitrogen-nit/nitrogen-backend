@@ -8,7 +8,7 @@ only `api`, `dto` and, when it exists, `events`.
 
 | Module | Schema | Current owned tables |
 |---|---|---|
-| `identity` | `identity` | `users` |
+| `identity` | `identity` | `users`, `user_roles`, `oauth_accounts`, `refresh_tokens`, `password_reset_tokens` |
 | `curriculum` | `curriculum` | Schema reserved; no runtime table yet |
 | `chemistry` | `chemistry` | Schema reserved; no runtime table yet |
 | `content` | `content` | Schema reserved; no runtime table yet |
@@ -19,7 +19,7 @@ only `api`, `dto` and, when it exists, `events`.
 | `flashcard` | `flashcard` | Schema reserved; no runtime table yet |
 | `simulation` | `simulation` | Schema reserved; no runtime table yet |
 | `integration` | `integration` | `outbox_events`, `processed_messages` |
-| `administration` | `administration` | Schema reserved; no runtime table yet |
+| `administration` | `administration` | `audit_logs`, `security_events` |
 
 ## Migration ownership
 
@@ -36,3 +36,16 @@ Currently approved cross-schema reference:
 | `practice` | `identity` | `practice.practice_attempts.user_id` references `identity.users(id)` for database integrity |
 
 Database foreign keys across schemas are allowed; JPA object associations across modules are not.
+
+The approved list lives in `FlywayMigrationOwnershipTest.APPROVED_CROSS_SCHEMA_REFERENCES`.
+
+## Module dependencies
+
+Declared in each module's `package-info.java` (`@ApplicationModule(allowedDependencies = ...)`):
+
+| Module | Allowed dependencies |
+|---|---|
+| `practice` | `common`, `platform`, `identity::api` |
+| Every other business module | `common`, `platform` |
+
+`common` and `platform` are open modules: shared kernel and technical infrastructure (security, messaging, outbox publisher, observability, scheduling).

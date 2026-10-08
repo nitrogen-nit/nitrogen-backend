@@ -34,6 +34,7 @@ REST endpoints, messaging or module dependencies.
 ## Transaction boundary
 
 - [ ] `@Transactional` is declared only in `service`.
+- [ ] Every `@Service` declares `@Transactional` on the class or a public method.
 - [ ] Transaction scope matches one use case.
 - [ ] No controller, repository, entity, DTO or config class opens a transaction.
 
@@ -57,6 +58,8 @@ REST endpoints, messaging or module dependencies.
 - [ ] No HTTP/RabbitMQ/S3/MinIO call happens inside a DB transaction.
 - [ ] Durable publish-after-commit work uses the integration outbox.
 - [ ] Retry/idempotency behavior is clear.
+- [ ] New event payloads have a JSON Schema under `contracts/json-schema/messages/` and a `contracts/CHANGELOG.md` entry.
+- [ ] RabbitMQ consumers go through `RabbitIdempotentConsumer` and are gated by `@Profile("worker")`.
 
 ## Security
 

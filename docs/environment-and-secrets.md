@@ -20,49 +20,85 @@ SPRING_PROFILES_ACTIVE=web,prod
 provide endpoints and credentials through environment variables or a secret
 store.
 
+`web` and `worker` both activate the `core` profile group automatically, so
+cross-module facades (`@Profile("core")`) exist in either mode. Tests run with
+the `test` profile (`src/test/resources/application-test.yml`), where
+Testcontainers supplies PostgreSQL and RabbitMQ.
+
+`application.yml` also imports `optional:file:.env.local[.properties]`, so a
+process started from the repository root reads `.env.local` directly.
+
 ## Profile Behavior
 
 | Profile | Flyway | Hibernate DDL | Credential source | Intended use |
 |---|---:|---|---|---|
-| `local` | Enabled | `validate` | `.env.local` with safe local defaults | Developer laptop |
+| `local` | Enabled | `validate` | `.env.local`, falling back to safe local defaults in `application-local.yml` | Developer laptop |
 | `dev` | Enabled | `validate` | GitHub Environment, AWS SSM Parameter Store, or runtime host env | Shared development |
 | `prod` | Disabled | `validate` | GitHub Environment plus production host secret store | Production runtime |
 
 Production keeps Flyway disabled in the application process. The deployment
 pipeline must run migration as a separate step before rolling out the app.
 
+| Runtime mode | HTTP port | Scheduler / outbox publisher | RabbitMQ listeners | Rabbit health |
+|---|---|---|---|---|
+| `web` | `NITROGEN_WEB_PORT` (default `8080`) | On | Off | `NITROGEN_RABBIT_HEALTH_ENABLED` (default `false`; `true` under `local`) |
+| `worker` | `NITROGEN_WORKER_PORT` (default `8081`, actuator only) | Off | On, manual ack | Always on |
+
 ## Required Variables
 
-| Name | Local | Dev | Prod | Required | Type | Example | Stored in | Used by |
-|---|---|---|---|---:|---|---|---|---|
-| `SPRING_PROFILES_ACTIVE` | `web,local` | `web,dev` or `worker,dev` | `web,prod` or `worker,prod` | Yes | Variable | `web,local` | Local `.env.local`; GitHub Environment variable; runtime service env | Spring profile activation |
-| `NITROGEN_ENVIRONMENT` | `local` | `dev` | `prod` | Yes | Variable | `dev` | Local `.env.local`; GitHub Environment variable; AWS SSM `/nitrogen/dev/environment`; Hetzner runtime env | Banner, diagnostics, logging context |
-| `NITROGEN_DB_URL` | localhost JDBC URL | RDS JDBC URL | Production JDBC URL | Yes | Variable | `jdbc:postgresql://db.example:5432/nitrogen?sslmode=require` | Local `.env.local`; GitHub Environment variable; AWS SSM `/nitrogen/dev/db/url`; Hetzner runtime env | Spring datasource |
-| `NITROGEN_DB_USER` | `nitrogen` | app DB user | app DB user | Yes | Variable | `nitrogen_app` | Local `.env.local`; GitHub Environment variable; AWS SSM `/nitrogen/dev/db/user`; Hetzner runtime env | Spring datasource |
-| `NITROGEN_DB_PASSWORD` | local-only password | RDS app password | production DB password | Yes | Secret | `local-db-password` | Local `.env.local`; GitHub Environment secret only when needed by deploy; AWS Secrets Manager or SSM SecureString `/nitrogen/dev/db/password`; Hetzner host secret file/env | Spring datasource |
-| `NITROGEN_DB_POOL_SIZE` | `5` | small shared value | production capacity value | Yes | Variable | `10` | Local `.env.local`; GitHub Environment variable; AWS SSM `/nitrogen/dev/db/pool-size`; Hetzner runtime env | HikariCP |
-| `NITROGEN_RABBIT_HOST` | `localhost` | development broker host | production broker host | Yes | Variable | `rabbitmq.internal` | Local `.env.local`; GitHub Environment variable; AWS SSM `/nitrogen/dev/rabbit/host`; Hetzner runtime env | Spring AMQP |
-| `NITROGEN_RABBIT_PORT` | `5672` | broker port | broker port | Yes | Variable | `5672` | Local `.env.local`; GitHub Environment variable; AWS SSM `/nitrogen/dev/rabbit/port`; Hetzner runtime env | Spring AMQP |
-| `NITROGEN_RABBIT_USER` | `nitrogen` | app broker user | app broker user | Yes | Variable | `nitrogen_app` | Local `.env.local`; GitHub Environment variable; AWS SSM `/nitrogen/dev/rabbit/user`; Hetzner runtime env | Spring AMQP |
-| `NITROGEN_RABBIT_PASSWORD` | local-only password | broker password | broker password | Yes | Secret | `local-rabbit-password` | Local `.env.local`; GitHub Environment secret only when needed by deploy; AWS Secrets Manager or SSM SecureString `/nitrogen/dev/rabbit/password`; Hetzner host secret file/env | Spring AMQP |
-| `NITROGEN_RABBIT_HEALTH_ENABLED` | `true` | `false` for web, `true` for worker | `false` for web, `true` for worker | Yes | Variable | `false` | Local `.env.local`; GitHub Environment variable; AWS SSM `/nitrogen/dev/rabbit/health-enabled`; Hetzner runtime env | Actuator health |
-| `NITROGEN_LOG_LEVEL` | `INFO` | `INFO` or `DEBUG` temporarily | `INFO` | Yes | Variable | `INFO` | Local `.env.local`; GitHub Environment variable; AWS SSM `/nitrogen/dev/log-level`; Hetzner runtime env | Logging |
-| `NITROGEN_APPLICATION_VERSION` | `local` | image tag or git sha | release tag or git sha | Yes | Variable | `sha-abc1234` | Local `.env.local`; GitHub Environment variable; AWS SSM `/nitrogen/dev/application-version`; Hetzner runtime env | Banner, metrics, structured logs, OpenTelemetry resource |
-| `NITROGEN_TRACING_ENABLED` | `false` | `true` | `true` | Yes | Variable | `true` | Local `.env.local`; GitHub Environment variable; AWS SSM `/nitrogen/dev/tracing/enabled`; Hetzner runtime env | Micrometer/OpenTelemetry tracing |
-| `NITROGEN_TRACING_SAMPLING_PROBABILITY` | `0.0` | `1.0` | configurable, usually `0.1` | Yes | Variable | `0.1` | Local `.env.local`; GitHub Environment variable; AWS SSM `/nitrogen/dev/tracing/sampling-probability`; Hetzner runtime env | Trace sampling |
-| `NITROGEN_OTLP_ENDPOINT` | `http://localhost:4318/v1/traces` | collector URL | collector URL | Yes when tracing enabled | Variable | `http://otel-collector:4318/v1/traces` | Local `.env.local`; GitHub Environment variable; AWS SSM `/nitrogen/dev/otlp/endpoint`; Hetzner runtime env | OTLP trace export |
+These have no default outside `local` and must be set for `dev` and `prod`.
+
+| Name | Type | Example | Stored in | Used by |
+|---|---|---|---|---|
+| `SPRING_PROFILES_ACTIVE` | Variable | `web,dev` | GitHub Environment variable; runtime service env | Spring profile activation |
+| `NITROGEN_ENVIRONMENT` | Variable | `dev` | GitHub Environment variable; AWS SSM `/nitrogen/dev/environment`; Hetzner runtime env | Banner, metrics tag, logs, OpenTelemetry resource |
+| `NITROGEN_DB_URL` | Variable | `jdbc:postgresql://db.example:5432/nitrogen?sslmode=require` | GitHub Environment variable; AWS SSM `/nitrogen/dev/db/url`; Hetzner runtime env | Spring datasource |
+| `NITROGEN_DB_USER` | Variable | `nitrogen_app` | GitHub Environment variable; AWS SSM `/nitrogen/dev/db/user`; Hetzner runtime env | Spring datasource |
+| `NITROGEN_DB_PASSWORD` | Secret | — | AWS Secrets Manager or SSM SecureString `/nitrogen/dev/db/password`; Hetzner host secret | Spring datasource |
+| `NITROGEN_RABBIT_HOST` | Variable | `rabbitmq.internal` | GitHub Environment variable; AWS SSM `/nitrogen/dev/rabbit/host`; Hetzner runtime env | Spring AMQP |
+| `NITROGEN_RABBIT_PORT` | Variable | `5672` | GitHub Environment variable; AWS SSM `/nitrogen/dev/rabbit/port`; Hetzner runtime env | Spring AMQP |
+| `NITROGEN_RABBIT_USER` | Variable | `nitrogen_app` | GitHub Environment variable; AWS SSM `/nitrogen/dev/rabbit/user`; Hetzner runtime env | Spring AMQP |
+| `NITROGEN_RABBIT_PASSWORD` | Secret | — | AWS Secrets Manager or SSM SecureString `/nitrogen/dev/rabbit/password`; Hetzner host secret | Spring AMQP |
+
+`NITROGEN_OTLP_ENDPOINT` is also required in practice whenever tracing is
+enabled outside a laptop: its default is `http://localhost:4318/v1/traces`.
+
+## Variables With Defaults
+
+| Name | Default | Local | Dev | Prod | Used by |
+|---|---|---|---|---|---|
+| `NITROGEN_DB_POOL_SIZE` | `10` | `5` | small shared value | capacity value | HikariCP |
+| `NITROGEN_RABBIT_HEALTH_ENABLED` | `false` | `true` | `false` for web | `false` for web | Actuator health (worker ignores it and always checks Rabbit) |
+| `NITROGEN_LOG_LEVEL` | `INFO` | `INFO` | `INFO`, `DEBUG` temporarily | `INFO` | `vn.nitrogen` log level |
+| `NITROGEN_APPLICATION_VERSION` | `spring.application.version` or `unknown` | `local` | image tag or git sha | release tag or git sha | Banner, metrics tag, logs, OpenTelemetry resource |
+| `NITROGEN_TRACING_ENABLED` | `false` | `false` | `true` | `true` | Micrometer/OpenTelemetry tracing |
+| `NITROGEN_TRACING_SAMPLING_PROBABILITY` | `0.0` | `0.0` | `1.0` | `0.1` | Trace sampling |
+| `NITROGEN_OTLP_ENDPOINT` | `http://localhost:4318/v1/traces` | same | collector URL | collector URL | OTLP trace export |
+| `NITROGEN_WEB_PORT` | `8080` | `8080` | — | — | `web` server port; Docker Compose host port |
+| `NITROGEN_WORKER_PORT` | `8081` | — | — | — | `worker` server port |
+| `NITROGEN_RABBIT_PREFETCH` | `10` | | | | Worker listener prefetch |
+| `NITROGEN_RABBIT_CONCURRENCY` | `2` | | | | Worker listener consumers |
+| `NITROGEN_RABBIT_MAX_CONCURRENCY` | `8` | | | | Worker listener max consumers |
+| `NITROGEN_OUTBOX_PUBLISH_INTERVAL` | `PT5S` | | | | Outbox publisher (web) |
+| `NITROGEN_OUTBOX_BATCH_SIZE` | `100` | | | | Outbox publisher |
+| `NITROGEN_OUTBOX_LEASE_DURATION` | `PT30S` | | | | Outbox publisher |
+| `NITROGEN_OUTBOX_CONFIRM_TIMEOUT` | `PT10S` | | | | Outbox publisher |
+| `NITROGEN_OUTBOX_MAX_RETRIES` | `8` | | | | Outbox publisher |
+| `NITROGEN_OUTBOX_RETRY_BASE_DELAY` | `PT5S` | | | | Outbox publisher |
+| `NITROGEN_OUTBOX_RETRY_MAX_DELAY` | `PT15M` | | | | Outbox publisher |
+
+Outbox settings are described in [Messaging](design/messaging.md).
 
 ## Optional Local Variables
 
-| Name | Required | Type | Example | Stored in | Used by |
-|---|---:|---|---|---|---|
-| `NITROGEN_DB_NAME` | Local only | Variable | `nitrogen` | Local `.env.local` | Docker Compose PostgreSQL bootstrap |
-| `NITROGEN_WEB_PORT` | Local only | Variable | `8080` | Local `.env.local` | Docker Compose backend port |
-| `NITROGEN_WEB_SCHEME` | No | Variable | `http` | Local `.env.local` or runtime env | Startup URL displayed after web server starts |
-| `NITROGEN_WEB_HOST` | No | Variable | `localhost` | Local `.env.local` or runtime env | Startup URL displayed after web server starts |
-| `NITROGEN_RABBIT_MANAGEMENT_PORT` | Local only | Variable | `15672` | Local `.env.local` | RabbitMQ Management UI |
-| `NITROGEN_HIBERNATE_SQL_LOG_LEVEL` | No | Variable | `WARN` | Local `.env.local` | Local SQL logging |
-| `NITROGEN_DOCKER_OTLP_ENDPOINT` | No | Variable | `http://host.docker.internal:4318/v1/traces` | Shell override or local `.env.local` | Docker Compose backend OTLP endpoint override |
+| Name | Example | Used by |
+|---|---|---|
+| `NITROGEN_DB_NAME` | `nitrogen` | Docker Compose PostgreSQL bootstrap |
+| `NITROGEN_WEB_SCHEME` | `http` | Startup URL logged by `WebStartupReporter`; `open-browser-when-ready.sh` |
+| `NITROGEN_WEB_HOST` | `localhost` | Same as above |
+| `NITROGEN_RABBIT_MANAGEMENT_PORT` | `15672` | RabbitMQ Management UI host port |
+| `NITROGEN_HIBERNATE_SQL_LOG_LEVEL` | `WARN` | `org.hibernate.SQL` level under `local` |
+| `NITROGEN_DOCKER_OTLP_ENDPOINT` | `http://host.docker.internal:4318/v1/traces` | OTLP endpoint for the Compose backend container |
 
 ## Local Workflow
 
@@ -73,33 +109,27 @@ cp .env.local.example .env.local
 ./scripts/local-down.sh
 ```
 
-`./scripts/local-up.sh` starts PostgreSQL 16, RabbitMQ Management, and the
-backend web process through Docker Compose. PostgreSQL and RabbitMQ ports are
-bound to `127.0.0.1` only. RabbitMQ Management is available at
-`http://localhost:15672` by default.
+| Script | What it does |
+|---|---|
+| `local-up.sh` | Creates `.env.local` from the example if missing, starts PostgreSQL 16 and RabbitMQ Management, builds and starts the `backend-web` container, waits for health, then runs the smoke test |
+| `local-smoke.sh` | Checks PostgreSQL and RabbitMQ, backend liveness/readiness, `/actuator/info`, and that Flyway applied SQL migrations with no failures |
+| `local-down.sh` | Stops the Compose stack |
+| `local-reset.sh --yes` | Stops the stack and deletes the PostgreSQL and RabbitMQ volumes |
+| `run-web-dev.sh` | Runs the backend on the host with `./mvnw spring-boot:run` (profiles from `SPRING_PROFILES_ACTIVE`, default `web,local`) |
+| `open-browser-when-ready.sh [path]` | Waits for readiness, then opens the browser (default path `/swagger-ui.html`) |
 
-`./scripts/local-reset.sh --yes` removes local PostgreSQL and RabbitMQ volumes.
+PostgreSQL, RabbitMQ and backend ports are bound to `127.0.0.1` only.
+RabbitMQ Management is available at `http://localhost:15672` by default.
 
 ## IntelliJ Run Configuration
 
-Set the backend module root as the working directory:
+- Working directory: the repository root, so `.env.local` is picked up by the
+  application's own `spring.config.import`.
+- Active profiles: `web,local`.
 
-```text
-/Users/macbook/Documents/Nitrogen/nitrogen-backend
-```
-
-Use Active profiles:
-
-```text
-web,local
-```
-
-If IntelliJ does not load `.env.local`, use the EnvFile plugin or set the same
-variables in the Run/Debug Configuration environment field.
-
-To open the backend automatically from IntelliJ, use the IDE's built-in launch
-browser option and point it at `http://localhost:8080` or the value printed by
-the startup log.
+Start PostgreSQL and RabbitMQ first (for example `docker compose -f
+compose.local.yml up -d postgres rabbitmq`). The startup log prints the backend
+URL once the web server is up.
 
 ## Shared Dev On AWS
 

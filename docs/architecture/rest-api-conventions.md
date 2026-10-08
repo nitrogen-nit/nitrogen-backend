@@ -34,9 +34,19 @@ code must not drift away from that contract.
 
 ## Errors
 
-- Error responses use the shared error contract produced by `GlobalExceptionHandler`.
+- Error responses are RFC 7807 `application/problem+json` produced by `GlobalExceptionHandler`:
+
+  | Field | Meaning |
+  |---|---|
+  | `type` | `https://docs.nitrogen.vn/errors/<error_code>` |
+  | `title`, `status`, `detail` | Standard ProblemDetail fields |
+  | `errorCode` | Stable `ErrorCode` name; clients branch on this, never on `detail` |
+  | `fields` | Validation failures only: `"<field>: <message>"` |
+
+- Services throw `BusinessException(ErrorCode, status, message)`; controllers never build error responses themselves.
+- Bean Validation failures and unreadable bodies map to `400 VALIDATION_FAILED`; unexpected exceptions map to `500 INTERNAL_ERROR` with a generic message.
 - Do not expose stack traces, SQL details, table names or driver exceptions.
-- Include correlation ID when available so logs and client errors can be connected.
+- Every response, including errors, carries the `X-Correlation-ID` header so logs and client errors can be connected.
 
 ## Pagination, filtering and sorting
 
@@ -47,9 +57,15 @@ code must not drift away from that contract.
 
 ## Correlation and idempotency
 
-- Accept `X-Correlation-Id` from callers when valid; generate one when missing.
-- Return the correlation ID in responses.
-- Important command endpoints should accept `Idempotency-Key` and document the replay semantics.
+- Accept `X-Correlation-ID` from callers when valid; generate one when missing (see [Observability](../observability.md)).
+- Return the correlation ID in the `X-Correlation-ID` response header.
+- Important command endpoints should be idempotent and document the replay semantics. The current implementation takes the key in the request body: `StartPracticeAttemptRequest.idempotencyKey`.
+
+## Security
+
+- Every endpoint requires authentication by default; anonymous requests get `401`, not `403`.
+- Public endpoints are listed explicitly in `platform/security/SecurityConfig`; today only `GET /actuator/health/**`, `/actuator/info`, `/actuator/prometheus` and OpenAPI/Swagger UI.
+- JWT resource server and role-based authorization are not configured yet.
 
 ## Enforcement
 
