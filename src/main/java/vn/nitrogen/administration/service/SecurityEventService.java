@@ -8,9 +8,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import vn.nitrogen.administration.domain.SecurityEvent;
-import vn.nitrogen.administration.domain.SecurityEventOutcome;
-import vn.nitrogen.administration.domain.SecurityEventSeverity;
-import vn.nitrogen.administration.domain.SecurityEventType;
+import vn.nitrogen.administration.dto.SecurityEventOutcome;
+import vn.nitrogen.administration.dto.SecurityEventSeverity;
+import vn.nitrogen.administration.dto.SecurityEventType;
 import vn.nitrogen.administration.repository.SecurityEventRepository;
 import vn.nitrogen.platform.observability.CorrelationId;
 

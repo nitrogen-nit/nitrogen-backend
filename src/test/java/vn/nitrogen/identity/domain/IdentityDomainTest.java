@@ -80,6 +80,38 @@ class IdentityDomainTest {
         }
 
         @Test
+        void registerPendingStoresHashAndWaitsForVerification() {
+            User user = User.registerPending("  New@Example.TEST ", "New", "{bcrypt}hash");
+
+            assertThat(user.getEmail()).isEqualTo("new@example.test");
+            assertThat(user.getStatus()).isEqualTo(UserStatus.PENDING);
+            assertThat(user.isActive()).isFalse();
+            assertThat(user.getPasswordHash()).isEqualTo("{bcrypt}hash");
+            assertThat(user.isEmailVerified()).isFalse();
+        }
+
+        @Test
+        void verifyEmailActivatesPendingUser() {
+            User user = User.registerPending("new@example.test", "New", "{bcrypt}hash");
+
+            user.verifyEmail(NOW);
+
+            assertThat(user.getStatus()).isEqualTo(UserStatus.ACTIVE);
+            assertThat(user.getEmailVerifiedAt()).isEqualTo(NOW);
+        }
+
+        @Test
+        void verifyEmailDoesNotReactivateDisabledUser() {
+            User user = User.registerPending("new@example.test", "New", "{bcrypt}hash");
+            user.disable();
+
+            user.verifyEmail(NOW);
+
+            assertThat(user.getStatus()).isEqualTo(UserStatus.DISABLED);
+            assertThat(user.isEmailVerified()).isTrue();
+        }
+
+        @Test
         void recordLoginStoresLastLoginInstant() {
             User user = newUser();
 
@@ -284,6 +316,31 @@ class IdentityDomainTest {
 
             assertThat(account.getLinkedAt()).isEqualTo(linkedAt);
             assertThat(account.getUpdatedAt()).isAfterOrEqualTo(linkedAt);
+        }
+    }
+
+    @Nested
+    class EmailVerificationTokenRules {
+
+        @Test
+        void consumeMarksTokenUsed() {
+            EmailVerificationToken token = EmailVerificationToken.issue(
+                    newUser(), "hash", NOW, NOW.plusSeconds(60));
+
+            assertThat(token.isConsumed()).isFalse();
+            token.consume(NOW.plusSeconds(1));
+
+            assertThat(token.isConsumed()).isTrue();
+            assertThat(token.getConsumedAt()).isEqualTo(NOW.plusSeconds(1));
+        }
+
+        @Test
+        void expiresAtExpiryInstant() {
+            EmailVerificationToken token = EmailVerificationToken.issue(
+                    newUser(), "hash", NOW, NOW.plusSeconds(60));
+
+            assertThat(token.isExpiredAt(NOW.plusSeconds(59))).isFalse();
+            assertThat(token.isExpiredAt(NOW.plusSeconds(60))).isTrue();
         }
     }
 }
