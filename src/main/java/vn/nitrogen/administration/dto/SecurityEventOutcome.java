@@ -1,4 +1,4 @@
-package vn.nitrogen.administration.domain;
+package vn.nitrogen.administration.dto;
 
 public enum SecurityEventOutcome {
     SUCCESS,

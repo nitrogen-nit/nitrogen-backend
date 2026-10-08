@@ -6,6 +6,9 @@ import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import vn.nitrogen.administration.dto.SecurityEventOutcome;
+import vn.nitrogen.administration.dto.SecurityEventSeverity;
+import vn.nitrogen.administration.dto.SecurityEventType;
 
 @Tag("unit")
 class SecurityEventTest {
