@@ -56,6 +56,24 @@ class MigrateFromEmptyDbTest extends TestcontainersBase {
     }
 
     @Test
+    void createsProcessedMessageConstraintAndRetentionIndex() throws Exception {
+        assertThat(query("""
+                SELECT conname
+                FROM pg_constraint
+                WHERE conrelid = 'integration.processed_messages'::regclass
+                """)).contains(
+                "processed_messages_pkey",
+                "chk_processed_messages_consumer_name_not_blank");
+
+        assertThat(query("""
+                SELECT indexname
+                FROM pg_indexes
+                WHERE schemaname = 'integration'
+                  AND tablename = 'processed_messages'
+                """)).contains("ix_processed_messages_processed_at");
+    }
+
+    @Test
     void createsAdministrationAuditLogTable() throws Exception {
         assertThat(tableNames("administration")).contains("audit_logs");
     }
