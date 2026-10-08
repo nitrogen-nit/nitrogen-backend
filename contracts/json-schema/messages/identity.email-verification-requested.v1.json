@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.nitrogen.vn/messages/identity.email-verification-requested.v1.json",
+  "title": "identity.EmailVerificationRequested payload",
+  "description": "Yêu cầu gửi email xác minh. Routing key identity.email-verification.requested. Mang token thô — chỉ consumer gửi email được bind routing key này, và không được log payload.",
+  "type": "object",
+  "required": ["userId", "email", "displayName", "verificationToken", "expiresAt"],
+  "additionalProperties": false,
+  "properties": {
+    "userId": { "type": "string", "format": "uuid" },
+    "email": { "type": "string", "format": "email", "maxLength": 254 },
+    "displayName": { "type": "string", "minLength": 1, "maxLength": 100 },
+    "verificationToken": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43}$" },
+    "expiresAt": { "type": "string", "format": "date-time" }
+  }
+}

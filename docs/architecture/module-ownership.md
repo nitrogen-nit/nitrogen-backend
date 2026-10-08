@@ -8,7 +8,7 @@ only `api`, `dto` and, when it exists, `events`.
 
 | Module | Schema | Current owned tables |
 |---|---|---|
-| `identity` | `identity` | `users` |
+| `identity` | `identity` | `users`, `user_roles`, `oauth_accounts`, `refresh_tokens`, `password_reset_tokens`, `email_verification_tokens` |
 | `curriculum` | `curriculum` | Schema reserved; no runtime table yet |
 | `chemistry` | `chemistry` | Schema reserved; no runtime table yet |
 | `content` | `content` | Schema reserved; no runtime table yet |

@@ -8,6 +8,8 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 
@@ -24,6 +26,21 @@ import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 @EnableMethodSecurity
 public class SecurityConfig {
 
+    /** Endpoint xác thực mở cho anonymous — chính chúng là cách để có credential. */
+    private static final String[] PUBLIC_AUTH_ENDPOINTS = {
+            "/api/v1/auth/registrations",
+            "/api/v1/auth/email-verifications"
+    };
+
+    /**
+     * Hash có tiền tố thuật toán ({@code {bcrypt}...}) để sau này đổi thuật toán
+     * mà hash cũ vẫn kiểm được.
+     */
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+    }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
@@ -35,6 +52,7 @@ public class SecurityConfig {
                                 "/actuator/health/**",
                                 "/actuator/info",
                                 "/actuator/prometheus").permitAll()
+                        .requestMatchers(HttpMethod.POST, PUBLIC_AUTH_ENDPOINTS).permitAll()
                         .requestMatchers(
                                 "/v3/api-docs",
                                 "/v3/api-docs/**",
@@ -46,6 +64,9 @@ public class SecurityConfig {
                 // "chưa đăng nhập" với "đăng nhập rồi nhưng không đủ quyền".
                 .exceptionHandling(handling -> handling
                         .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+                // Endpoint công khai không có session hay cookie nào để CSRF lợi dụng;
+                // client chưa đăng nhập cũng không có cách lấy CSRF token.
+                .csrf(csrf -> csrf.ignoringRequestMatchers(PUBLIC_AUTH_ENDPOINTS))
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .build();

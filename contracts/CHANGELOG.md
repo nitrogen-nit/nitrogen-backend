@@ -17,3 +17,6 @@ lạnh, không purge tuỳ tiện), nên contract sinh ra nó phải còn đọc
 - `responses/single-choice.v1.json` — khởi tạo
 - `responses/true-false-group.v1.json` — khởi tạo
 - `responses/quantity.v1.json` — khởi tạo
+- `messages/identity.user-registered.v1.json` — khởi tạo (NIT-20)
+- `messages/identity.email-verification-requested.v1.json` — khởi tạo (NIT-20)
+- OpenAPI: `POST /api/v1/auth/registrations`, `POST /api/v1/auth/email-verifications` (NIT-20)

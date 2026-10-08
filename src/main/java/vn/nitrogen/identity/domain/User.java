@@ -79,6 +79,17 @@ public class User extends AbstractIdentifiableEntity {
         return new User(email, displayName, UserStatus.ACTIVE);
     }
 
+    /**
+     * Tài khoản vừa tự đăng ký bằng email/password: {@code PENDING} cho tới khi
+     * email được xác minh, nên chưa hiện ra với module khác qua
+     * {@code IdentityQueryApi}.
+     */
+    public static User registerPending(String email, String displayName, String passwordHash) {
+        User user = new User(email, displayName, UserStatus.PENDING);
+        user.passwordHash = passwordHash;
+        return user;
+    }
+
     public String getEmail() {
         return email;
     }
@@ -149,10 +160,19 @@ public class User extends AbstractIdentifiableEntity {
         this.passwordHash = passwordHash;
     }
 
-    /** Đánh dấu email đã xác thực; cờ và mốc thời gian luôn đi cùng nhau. */
+    /**
+     * Đánh dấu email đã xác thực; cờ và mốc thời gian luôn đi cùng nhau.
+     *
+     * <p>Tài khoản {@code PENDING} chỉ chờ bước này nên được kích hoạt luôn.
+     * Tài khoản đang {@code LOCKED}/{@code DISABLED} giữ nguyên trạng thái —
+     * xác minh email không phải đường mở khoá.
+     */
     public void verifyEmail(Instant verifiedAt) {
         this.emailVerified = true;
         this.emailVerifiedAt = verifiedAt;
+        if (status == UserStatus.PENDING) {
+            status = UserStatus.ACTIVE;
+        }
     }
 
     public void recordLogin(Instant loginAt) {

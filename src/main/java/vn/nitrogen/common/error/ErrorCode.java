@@ -26,6 +26,10 @@ public enum ErrorCode {
     RESPONSE_SCHEMA_INVALID(HttpStatus.BAD_REQUEST),
     UNSUPPORTED_SCHEMA_VERSION(HttpStatus.BAD_REQUEST),
 
+    // ── identity ──
+    PASSWORD_POLICY_VIOLATION(HttpStatus.BAD_REQUEST),
+    EMAIL_VERIFICATION_TOKEN_INVALID(HttpStatus.BAD_REQUEST),
+
     // ── chung ──
     USER_NOT_FOUND(HttpStatus.NOT_FOUND),
     VALIDATION_FAILED(HttpStatus.BAD_REQUEST),
