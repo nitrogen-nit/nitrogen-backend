@@ -10,7 +10,7 @@ Module `administration` sở hữu hai luồng ghi nhận dùng chung cho mọi 
 | | Audit log | Security event |
 |---|---|---|
 | Bảng | `administration.audit_logs` | `administration.security_events` |
-| Ghi nhận | Ai đã làm gì với đối tượng nào | Sự kiện bảo mật: đăng nhập, khoá tài khoản, truy cập trái phép, rate limit |
+| Ghi nhận | Ai đã làm gì với đối tượng nào | Sự kiện bảo mật: đăng nhập, đăng ký, xác minh email, khoá tài khoản, truy cập trái phép, rate limit |
 | Facade | `AuditApi` | `SecurityEventApi` |
 | Transaction | `MANDATORY` — phải nằm trong transaction của hành động được audit | `REQUIRES_NEW` — commit độc lập với transaction gọi |
 | Ai đọc | Chỉ module `administration` | Chỉ module `administration` |
@@ -54,7 +54,7 @@ securityEventApi.record(actorId, SecurityEventType.LOGIN_FAILURE,
 
 | Enum | Giá trị |
 |---|---|
-| `SecurityEventType` | `LOGIN_SUCCESS`, `LOGIN_FAILURE`, `ACCOUNT_LOCKED`, `UNAUTHORIZED_ACCESS`, `RATE_LIMITED` |
+| `SecurityEventType` | `LOGIN_SUCCESS`, `LOGIN_FAILURE`, `ACCOUNT_LOCKED`, `UNAUTHORIZED_ACCESS`, `RATE_LIMITED`, `REGISTRATION_SUCCESS`, `REGISTRATION_DUPLICATE_EMAIL`, `EMAIL_VERIFICATION_SUCCESS`, `EMAIL_VERIFICATION_FAILURE` |
 | `SecurityEventSeverity` | `INFO`, `WARNING`, `CRITICAL` |
 | `SecurityEventOutcome` | `SUCCESS`, `FAILURE`, `BLOCKED` |
 

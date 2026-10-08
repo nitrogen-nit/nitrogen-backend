@@ -1,5 +1,8 @@
 package vn.nitrogen.administration.domain;
 
+import vn.nitrogen.administration.dto.SecurityEventOutcome;
+import vn.nitrogen.administration.dto.SecurityEventSeverity;
+import vn.nitrogen.administration.dto.SecurityEventType;
 import jakarta.persistence.*;
 import vn.nitrogen.common.domain.AbstractIdentifiableEntity;
 

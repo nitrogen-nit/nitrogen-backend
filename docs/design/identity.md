@@ -7,7 +7,7 @@ title: Identity Schema And Token Model
 
 Tài liệu này mô tả phần nền tảng của module Identity: user, role, OAuth account, refresh token và password reset token.
 
-> **Trạng thái:** schema, entity và repository đã có. Các luồng refresh token và reset password bên dưới là **thiết kế**, chưa có endpoint HTTP. Module khác đọc user qua `IdentityQueryApi`, chỉ thấy user `ACTIVE`.
+> **Trạng thái:** đăng ký và xác minh email đã có endpoint (`POST /api/v1/auth/registrations`, `POST /api/v1/auth/email-verifications`). Các luồng refresh token và reset password bên dưới vẫn là **thiết kế**, chưa có endpoint HTTP. Module khác đọc user qua `IdentityQueryApi`, chỉ thấy user `ACTIVE`.
 
 ## UML
 
@@ -16,6 +16,7 @@ classDiagram
     User "1" --> "*" OAuthAccount : links
     User "1" --> "*" RefreshToken : owns
     User "1" --> "*" PasswordResetToken : owns
+    User "1" --> "*" EmailVerificationToken : owns
     User "1" --> "*" UserRole : has
 
     class User {
@@ -68,6 +69,31 @@ classDiagram
         long rowVersion
     }
 ```
+
+## Registration And Email Verification Flow
+
+`POST /api/v1/auth/registrations` và `POST /api/v1/auth/email-verifications` là endpoint công khai.
+
+```mermaid
+flowchart TD
+    A[Client gửi email, password, displayName] --> B[Kiểm password ≤ 72 byte, băm BCrypt — ngoài transaction]
+    B --> C{Email đã tồn tại?}
+    C -- Có --> D[Security event REGISTRATION_DUPLICATE_EMAIL]
+    C -- Không --> E[Tạo user PENDING + email_verification_tokens hash]
+    E --> F[Audit USER_REGISTERED + outbox UserRegistered, EmailVerificationRequested]
+    F --> G[Commit, rồi security event REGISTRATION_SUCCESS]
+    D --> H[202 VERIFICATION_PENDING — giống hệt nhau ở hai nhánh]
+    G --> H
+    H --> I[User mở link, client gửi token]
+    I --> J{Token tồn tại, chưa dùng, chưa hết hạn?}
+    J -- Không --> K[400 EMAIL_VERIFICATION_TOKEN_INVALID — một lỗi chung]
+    J -- Có --> L[consumed_at, email_verified, PENDING → ACTIVE, audit USER_EMAIL_VERIFIED]
+    L --> M[204]
+```
+
+- Không lộ email đã tồn tại: cùng status, cùng body, không trả user id; nhánh trùng vẫn băm mật khẩu.
+- Chỉ lưu SHA-256 của token (256 bit ngẫu nhiên). Token thô chỉ nằm trong payload `identity.EmailVerificationRequested` cho bên gửi email; `identity.UserRegistered` không mang email hay token.
+- TTL token: `nitrogen.identity.email-verification.ttl` (mặc định `PT24H`).
 
 ## Password Reset Flow
 

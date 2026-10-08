@@ -4,6 +4,54 @@ info:
   version: 0.0.1-SNAPSHOT
   description: Nền tảng học và luyện thi Hoá học THPT.
 paths:
+  /api/v1/auth/registrations:
+    post:
+      tags:
+        - auth
+      summary: Register with email and password
+      description: >-
+        Public endpoint. Creates a PENDING account and sends a verification
+        email. The response is identical whether or not the email is already
+        registered, so it cannot be used to discover existing accounts.
+      operationId: registerUser
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterUserRequest"
+      responses:
+        "202":
+          description: Registration accepted; the account becomes active after email verification.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegistrationAcceptedResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+  /api/v1/auth/email-verifications:
+    post:
+      tags:
+        - auth
+      summary: Verify an email address
+      description: >-
+        Public endpoint. Consumes the one-time token from the verification
+        email. Unknown, used and expired tokens all return the same error
+        (errorCode EMAIL_VERIFICATION_TOKEN_INVALID).
+      operationId: verifyEmail
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyEmailRequest"
+      responses:
+        "204":
+          description: Email verified; a PENDING account is now ACTIVE.
+        "400":
+          $ref: "#/components/responses/BusinessError"
   /api/v1/practice-attempts:
     post:
       tags:
@@ -108,6 +156,43 @@ components:
           schema:
             $ref: "#/components/schemas/ProblemDetail"
   schemas:
+    RegisterUserRequest:
+      type: object
+      required:
+        - email
+        - password
+        - displayName
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        password:
+          type: string
+          format: password
+          minLength: 8
+          maxLength: 72
+          description: At most 72 bytes in UTF-8 (errorCode PASSWORD_POLICY_VIOLATION otherwise).
+        displayName:
+          type: string
+          maxLength: 100
+    RegistrationAcceptedResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - VERIFICATION_PENDING
+    VerifyEmailRequest:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+          maxLength: 128
     StartPracticeAttemptRequest:
       type: object
       required:

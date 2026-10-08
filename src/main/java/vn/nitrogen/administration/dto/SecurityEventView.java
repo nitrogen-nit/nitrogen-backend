@@ -2,9 +2,9 @@ package vn.nitrogen.administration.dto;
 
 import java.time.Instant;
 import java.util.UUID;
-import vn.nitrogen.administration.domain.SecurityEventOutcome;
-import vn.nitrogen.administration.domain.SecurityEventSeverity;
-import vn.nitrogen.administration.domain.SecurityEventType;
+import vn.nitrogen.administration.dto.SecurityEventOutcome;
+import vn.nitrogen.administration.dto.SecurityEventSeverity;
+import vn.nitrogen.administration.dto.SecurityEventType;
 
 public record SecurityEventView(
         UUID id,

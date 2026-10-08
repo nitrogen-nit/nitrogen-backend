@@ -64,7 +64,7 @@ code must not drift away from that contract.
 ## Security
 
 - Every endpoint requires authentication by default; anonymous requests get `401`, not `403`.
-- Public endpoints are listed explicitly in `platform/security/SecurityConfig`; today only `GET /actuator/health/**`, `/actuator/info`, `/actuator/prometheus` and OpenAPI/Swagger UI.
+- Public endpoints are listed explicitly in `platform/security/SecurityConfig`; today `POST /api/v1/auth/registrations`, `POST /api/v1/auth/email-verifications`, `GET /actuator/health/**`, `/actuator/info`, `/actuator/prometheus` and OpenAPI/Swagger UI. CSRF protection is skipped only for the two public auth endpoints.
 - JWT resource server and role-based authorization are not configured yet.
 
 ## Enforcement

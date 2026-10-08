@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.nitrogen.vn/messages/identity.user-registered.v1.json",
+  "title": "identity.UserRegistered payload",
+  "description": "Một tài khoản email/password vừa được tạo ở trạng thái PENDING. Routing key identity.user.registered. Cố ý không mang email hay token: event này dành cho mọi consumer.",
+  "type": "object",
+  "required": ["userId", "registeredAt", "emailVerified"],
+  "additionalProperties": false,
+  "properties": {
+    "userId": { "type": "string", "format": "uuid" },
+    "registeredAt": { "type": "string", "format": "date-time" },
+    "emailVerified": { "const": false }
+  }
+}

@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import vn.nitrogen.administration.domain.SecurityEvent;
-import vn.nitrogen.administration.domain.SecurityEventType;
+import vn.nitrogen.administration.dto.SecurityEventType;
 
 public interface SecurityEventRepository extends JpaRepository<SecurityEvent, UUID> {
 

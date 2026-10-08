@@ -11,7 +11,7 @@ Trang này gom tài liệu thiết kế, quyết định kiến trúc và ghi ch
 
 | Phần | Trạng thái |
 |---|---|
-| Identity | Schema, entity và repository cho user, role, OAuth account, refresh/reset token; chưa có endpoint xác thực |
+| Identity | Đăng ký email/password và xác minh email qua REST; schema cho role, OAuth account, refresh/reset token (chưa có đăng nhập, refresh, reset password) |
 | Practice | Bắt đầu và tra cứu lượt luyện tập qua REST |
 | Administration | Ghi và tra cứu audit log, security event |
 | Integration / messaging | Transactional outbox, outbox publisher, idempotent consumer, RabbitMQ topology |
